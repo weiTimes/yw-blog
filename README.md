@@ -4,9 +4,9 @@ This website is built using [Docusaurus 2](https://v2.docusaurus.io/), a modern 
 
 ## TODO
 
-- [] 支持Typescript
-- [] 部署
-- [] 子域名
+- [x] 支持Typescript
+- [x] 部署
+- [x] 子域名
 
 ## Installation
 
