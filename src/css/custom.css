@@ -1,0 +1,79 @@
+/* stylelint-disable docusaurus/copyright-header */
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* You can override the default Infima variables here. */
+:root {
+  /* --ifm-color-primary: #25c2a0;
+  --ifm-color-primary-dark: rgb(33, 175, 144);
+  --ifm-color-primary-darker: rgb(31, 165, 136);
+  --ifm-color-primary-darkest: rgb(26, 136, 112);
+  --ifm-color-primary-light: rgb(70, 203, 174);
+  --ifm-color-primary-lighter: rgb(102, 212, 189);
+  --ifm-color-primary-lightest: rgb(146, 224, 208); */
+  --ifm-background-color: #fff;
+  --ifm-background-surface-color: #f2f6fa;
+  --ifm-color-primary: #ff6344;
+  --ifm-color-primary-dark: #ff4824;
+  --ifm-color-primary-darker: #ff3b14;
+  --ifm-color-primary-darkest: #e22500;
+  --ifm-color-primary-light: #ff7e64;
+  --ifm-color-primary-lighter: #ff8b74;
+  --ifm-color-primary-lightest: #ffb4a5;
+  --ifm-code-font-size: 95%;
+}
+
+.docusaurus-highlight-code-line {
+  /* background-color: rgb(72, 77, 91); */
+  background-color: rgb(72, 77, 91);
+
+  display: block;
+  margin: 0 calc(-1 * var(--ifm-pre-padding));
+  padding: 0 var(--ifm-pre-padding);
+}
+
+.hero__subtitle {
+  margin-bottom: 0;
+}
+
+.navbar__item.navbar__link[href*='github'] {
+  display: flex;
+  font-size: 0;
+  padding: 0 12px;
+}
+
+.navbar__item.navbar__link[href*='github']:before {
+  content: '';
+  width: 24px;
+  height: 24px;
+  background: url('/img/github.svg');
+  background-repeat: no-repeat;
+}
+
+.navbar__item.navbar__link[href*='juejin'] {
+  display: flex;
+  font-size: 0;
+  padding: 0 12px;
+}
+
+.navbar__item.navbar__link[href*='juejin']:before {
+  content: '';
+  width: 66px;
+  height: 24px;
+  background: url('/img/juejin.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.main-wrapper {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+}
+
+.main {
+  flex: 1 0 auto;
+}
