@@ -6,6 +6,8 @@ import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import styles from './styles.module.css';
 
+import AVATAR from '../../static/img/avatar_employee.png';
+
 const features = [
   {
     title: '前端进阶',
@@ -60,7 +62,15 @@ function Home() {
       description='Description will go into a meta tag in <head />'>
       <header className={clsx('hero hero--primary', styles.heroBanner)}>
         <div className='container'>
-          <h1 className='hero__title'>{siteConfig.title}</h1>
+          <h1 className='hero__title'>
+            <div className='row'>
+              <img className={styles.avatar} src={AVATAR} />
+              <span>Hi, 我是叶威</span>
+            </div>
+            <span className={styles.subTitle}>
+              一个前端攻城狮 - In HangZhou
+            </span>
+          </h1>
           <p className='hero__subtitle'>{siteConfig.tagline}</p>
         </div>
       </header>
@@ -79,8 +89,7 @@ function Home() {
       </main>
       <footer className={styles.footer}>
         <div className={styles.footerCenter}>
-          Copyright © {new Date().getFullYear()} My Blog, Inc. Built with
-          Docusaurus.
+          Copyright © 浙ICP备2020032898号-1. Built with Docusaurus.
         </div>
       </footer>
     </Layout>

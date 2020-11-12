@@ -7,6 +7,7 @@ This website is built using [Docusaurus 2](https://v2.docusaurus.io/), a modern 
 - [x] 支持Typescript
 - [x] 部署
 - [x] 子域名
+- [x] https
 
 ## Installation
 
