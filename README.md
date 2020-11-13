@@ -4,10 +4,12 @@ This website is built using [Docusaurus 2](https://v2.docusaurus.io/), a modern 
 
 ## TODO
 
-- [x] 支持Typescript
+- [] 支持Typescript
 - [x] 部署
 - [x] 子域名
 - [x] https
+- [ ] travis
+- [ ] 持续更新前端进阶和博客内容
 
 ## Installation
 

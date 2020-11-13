@@ -63,7 +63,7 @@ function Home() {
       <header className={clsx('hero hero--primary', styles.heroBanner)}>
         <div className='container'>
           <h1 className='hero__title'>
-            <div className='row'>
+            <div className='row' style={{ alignItems: 'center' }}>
               <img className={styles.avatar} src={AVATAR} />
               <span>Hi, 我是叶威</span>
             </div>
@@ -74,7 +74,7 @@ function Home() {
           <p className='hero__subtitle'>{siteConfig.tagline}</p>
         </div>
       </header>
-      <main className='main'>
+      <main>
         {features && features.length > 0 && (
           <section className={styles.features}>
             <div className='container'>
