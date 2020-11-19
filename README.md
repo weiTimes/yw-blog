@@ -7,7 +7,7 @@
 - [x] 部署
 - [x] 子域名
 - [x] https
-- [x] 支持Typescript
+- [ ] 支持Typescript
 - [ ] travis 自动部署
 - [ ] 持续更新前端进阶和博客内容
 
