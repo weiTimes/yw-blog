@@ -20,10 +20,14 @@
     "@types/react-helmet": "^6.1.0",
     "@types/react-router-dom": "^5.1.6",
     "clsx": "^1.1.1",
+    "colors": "^1.4.0",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
+    "rsync": "^0.6.1",
+    "shelljs": "^0.8.4",
     "super-tiny-icons": "^0.4.0",
-    "typescript": "^4.0.5"
+    "typescript": "^4.0.5",
+    "yargs": "^16.1.0"
   },
   "browserslist": {
     "production": [

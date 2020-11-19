@@ -3,11 +3,17 @@ module.exports = {
   tagline: '欢迎光临，这里主要记录了web前端开发相关的一些文章 🚀',
   url: 'https://your-docusaurus-test-site.com',
   baseUrl: '/',
+  url: 'https://blog.ywhoo.cn',
   onBrokenLinks: 'throw',
   favicon: 'img/favicon.ico',
   organizationName: 'facebook', // Usually your GitHub org/user name.
   projectName: 'docblog', // Usually your repo name.
   themeConfig: {
+    algolia: {
+      algoliaOptions: {},
+      apiKey: '513292b2605e0bc7bfdf63163dfde1c4',
+      indexName: 'uniforms',
+    },
     navbar: {
       title: 'Ywhoo',
       logo: {
