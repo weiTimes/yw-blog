@@ -6,7 +6,7 @@ author_title: 前端攻城狮
 author_url: https://github.com/weiTimes
 author_image_url: https://avatars2.githubusercontent.com/u/21688593?s=460&u=09db1866a0350eb8c4dd0389b22a596d2b081b4b&v=4
 tags: [Javascript, 事件循环]
-description: 本文来由，希望可以剖析中间件的组合原理，从而帮助大家更加理解洋葱模型。
+description: 
 ---
 
 ## 运行时的页面构建过程
