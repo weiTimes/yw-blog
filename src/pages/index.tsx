@@ -60,33 +60,35 @@ function Home() {
     <Layout
       title={`我的首页`}
       description='Description will go into a meta tag in <head />'>
-      <header className={clsx('hero hero--primary', styles.heroBanner)}>
-        <div className='container'>
-          <h1 className='hero__title'>
-            <div className='row' style={{ alignItems: 'center' }}>
-              <img className={styles.avatar} src={AVATAR} />
-              <span>Hi, 我是叶威</span>
-            </div>
-            <span className={styles.subTitle}>
-              一个前端攻城狮 - In HangZhou
-            </span>
-          </h1>
-          <p className='hero__subtitle'>{siteConfig.tagline}</p>
-        </div>
-      </header>
-      <main>
-        {features && features.length > 0 && (
-          <section className={styles.features}>
-            <div className='container'>
-              <div className='row'>
-                {features.map((props, idx) => (
-                  <Feature key={idx} {...props} />
-                ))}
+      <div className={styles.content}>
+        <header className={clsx('hero hero--primary', styles.heroBanner)}>
+          <div className='container'>
+            <h1 className='hero__title'>
+              <div className='row' style={{ alignItems: 'center' }}>
+                <img className={styles.avatar} src={AVATAR} />
+                <span>Hi, 我是叶威</span>
               </div>
-            </div>
-          </section>
-        )}
-      </main>
+              <span className={styles.subTitle}>
+                一个前端攻城狮 - In HangZhou
+              </span>
+            </h1>
+            <p className='hero__subtitle'>{siteConfig.tagline}</p>
+          </div>
+        </header>
+        <main>
+          {features && features.length > 0 && (
+            <section className={styles.features}>
+              <div className='container'>
+                <div className='row'>
+                  {features.map((props, idx) => (
+                    <Feature key={idx} {...props} />
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+        </main>
+      </div>
       <footer className={styles.footer}>
         <div className={styles.footerCenter}>
           Copyright © 浙ICP备2020032898号-1. Built with Docusaurus.

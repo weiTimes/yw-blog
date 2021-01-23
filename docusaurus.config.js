@@ -11,8 +11,8 @@ module.exports = {
   themeConfig: {
     algolia: {
       algoliaOptions: {},
-      apiKey: '513292b2605e0bc7bfdf63163dfde1c4',
-      indexName: 'uniforms',
+      apiKey: '609b75569d3ee2ff902ef082d8ceb42e',
+      indexName: 'ywhoo',
     },
     navbar: {
       title: 'Ywhoo',

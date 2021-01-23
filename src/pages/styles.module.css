@@ -66,3 +66,7 @@
 .footerCenter {
   text-align: center;
 }
+
+.content {
+  flex: 1;
+}
