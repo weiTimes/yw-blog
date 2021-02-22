@@ -112,3 +112,12 @@ vscode 默认会隐藏 `.git` 文件，我想完整地看到当前项目的所�
 
 ![keybind](https://ypyun.ywhoo.cn/assets/20210212201333.png)
 
+### 最后
+
+当完成了这些配置后，当我们换一台电脑时，不会还得重新配置吧？放心，`Settings Sync` 插件可以帮助我们同步现有的 vscode 配置。
+
+首先确保你已经安装了它，键入 `cmd + shift + P`打开控制面板，找到 `Sync: Update/Upload Settings`，回车后就将我们的配置上传了（当然你需要先进行配置，这里就不演示了）。
+
+![sync](https://ypyun.ywhoo.cn/assets/20210212203113.png)
+
+在新的电脑想同步该配置，同样安装该插件，然后选择 `Sync: Download Settings`，等待同步完成就可以啦。
