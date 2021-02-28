@@ -11,7 +11,7 @@ module.exports = {
   themeConfig: {
     algolia: {
       algoliaOptions: {},
-      apiKey: '609b75569d3ee2ff902ef082d8ceb42e',
+      apiKey: 'UBSXNKMC9S',
       indexName: 'ywhoo',
     },
     navbar: {

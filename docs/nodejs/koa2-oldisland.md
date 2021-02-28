@@ -951,3 +951,158 @@ class AuthToken {
 }
 ```
 
+#### 小程序 openid 登录系统
+
+业务逻辑可以写在：
+
+1. router 中间件中
+2. Model
+
+在 MVC 分层架构中，业务逻辑一般写在 Model 中，如果是中大型项目，可以再分出一个 Service 层，然后将业务逻辑写在 Service 层中。
+
+#### 微信鉴权
+
+在微信小程序登录，拿到客户端传递过来的 code，调用微信的接口对其进行鉴权，鉴权通过可以拿到 openid；在生成 jwt token 之前，需要使用 openid 创建一个新用户，如果已经存在则查到该用户，最后把 uid 传递给生成 token 的函数。
+
+这些业务逻辑本来是可以写在 model 层的，不过由于逻辑可能会很多，就抽象出一个 `Services`，它是一个具有更高层次的抽象层，在其下面新建 `wx.js`，主要负责编写微信相关的业务逻辑。
+
+```javascript
+// /services/wx.js
+
+const { default: axios } = require('axios');
+const util = require('util');
+
+const { generateToken } = require('../../core/utils');
+const AuthToken = require('../../middlewares/auth-token');
+const User = require('../../models/user');
+
+class WxManager {
+  static async codeToToken(code) {
+    // code, appid, appsecret
+    const wxConfig = global.config.wx;
+
+    // format 可以将变量插入到 authCode2Session 中的占位符中
+    const url = util.format(
+      wxConfig.authCode2Session,
+      wxConfig.appid,
+      wxConfig.appSecret,
+      code
+    );
+
+    const res = await axios.get(url);
+
+    if (res.status !== 200) {
+      throw new global.errors.AuthFailed('openid获取失败');
+    }
+
+    const errorCode = res.data.errcode;
+
+    if (errorCode !== 0) {
+      throw new global.errors.AuthFailed(`openid获取失败: ${errorCode}`);
+    }
+
+    // 用户档案
+    // 1. openid => uid: openid比较长，查询效率不高；openid机密性较高，在客户端和服务端间传递容易造成 openid 泄漏。
+    // 2. 将 openid 写入数据库
+    // 3. 生成 jwt token 并返回
+    let user = await User.getUserByOpenid(res.data.openid);
+
+    if (!user) {
+      user = await User.createUserByOpenid(res.data.openid);
+    }
+
+    // 使用 uid 生成 jwt token
+    return generateToken(user.id, AuthToken.USER);
+  }
+}
+
+module.exports = WxManager;
+```
+
+通过 openid 生成 jwt token 的流程图如下：
+
+![openid to token](https://ypyun.ywhoo.cn/assets/20210223225720.png)
+
+### 开发一个测试小程序（主要为了测试小程序登录）
+
+1. 使用申请的小程序 appid 或者是测试小程序 appid 创建一个小程序，注意 appid 和 appsecret 需要和服务端配置的一致。
+
+2. 使用 lin-ui 组件库开发小程序，执行 `yarn add lin-ui@0.4.0` 安装它。
+
+3. 在小程序中勾选 `使用npm包` 和 `不校验合法域名xxx`
+![小程序设置](https://ypyun.ywhoo.cn/assets/20210224214601.png)
+
+4. 点击工具，选择 `构建 npm`，构建成功后可以在根目录下看到 `miniprogram_npm` 目录
+![构建npm](https://ypyun.ywhoo.cn/assets/20210224214709.png)
+
+5. 以下是具体代码实现，主要是渲染一个按钮，点击后请求我们的获取 `token` 接口，即登录，成功后提示登录成功，并将 token 写入 storage 中：
+
+```wxml
+<!-- pages/index/index.wxml -->
+<l-button size="long" bind:lintap="onGetToken">获取Token</l-button>
+```
+
+```javascript
+// pages/index/index.js
+Page({
+  onGetToken() {
+    wx.login({
+      success: (res) => {
+        if(res.code) {
+          wx.request({
+            method: 'POST',
+            url: 'http://localhost:3006/v1/token',
+            data: {
+              account: res.code,
+              type: 100
+            },
+            success: (res) => {
+              const statusCode = res.statusCode.toString();
+
+              if(statusCode.startsWith('2')) {
+                wx.showToast({
+                  title: '登陆成功',
+                })
+                wx.setStorage({
+                  data: res.data.token,
+                  key: 'token',
+                })
+              }
+            }
+          })
+        }
+      }
+    })
+  }
+})
+```
+
+### 数据库设计
+
+#### code first
+
+* 根据模型去创建数据表，每个模型相当于一个类
+* 先实现 Model，通过 Sequelize 去创建表
+
+#### 由粗到细
+
+* 用户
+* 期刊 粗 => 相似性：url, title, picture
+* Movie, Sentence, Music 细（实体表） => 扩展性高: Movie 有导演、演员，其它两个没有
+* Flow（业务表） => 期数：1期、2期...
+
+### Music, Sentence, Movie 模型定义
+
+同属于 Classic。
+
+共同字段：
+
+* image 图片
+* title 标题
+* pubdate 发布时间
+* content 内容
+* type 类型
+
+Music:
+
+* url

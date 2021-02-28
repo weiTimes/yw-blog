@@ -66,3 +66,149 @@ console.log(a); // [undefined, undefined, undefined]
 
 ### 使用 reduce 实现数组 map 方法
 
+```javascript
+function selfMap(fn, context) {
+  const arr = Array.prototype.slice.call(this);
+
+  return arr.reduce((pre, cur, i) => {
+    return [...pre, fn.call(context, cur, i, this)];
+  }, []);
+}
+
+Array.prototype.selfMap = selfMap;
+
+const res = [1, 2, 3].selfMap((value, index, array) => value + 1);
+
+console.log(res); // 2, 3, 4
+```
+
+### 循环实现数组 filter 方法
+
+```javascript
+function selfFilter(fn, context) {
+  const arr = Array.prototype.slice.call(this);
+  const result = [];
+
+  for (let i = 0; i < arr.length; i++) {
+    if (!arr.hasOwnProperty(i)) continue;
+
+    if (fn.call(context, arr[i], i, this)) {
+      result.push(arr[i]);
+    }
+  }
+
+  return result;
+}
+
+Array.prototype.selfFilter = selfFilter;
+
+const res = [1, 2, 3].selfFilter((v, i) => v <= 2);
+
+console.log(res); // [1, 2]
+```
+
+### 使用 reduce 实现数组 filter 方法
+
+```javascript
+function selfFilter(fn, context) {
+  const arr = Array.prototype.slice.call(this);
+
+  return arr.reduce((pre, cur, i) => {
+    if (fn.call(context, cur, i, this)) {
+      pre.push(cur);
+    }
+
+    return pre;
+  }, []);
+}
+
+Array.prototype.selfFilter = selfFilter;
+
+const res = [1, 2, 3].selfFilter((v, i, array) => v > 2);
+console.log(res);
+```
+
+### 循环实现数组的 some 方法
+
+some() 方法测试数组中是不是至少有1个元素通过了被提供的函数测试。它返回的是一个Boolean类型的值。
+
+> 如果用一个空数组进行测试，在任何情况下它返回的都是false。
+
+```javascript
+function selfSome(fn, context) {
+  const arr = Array.prototype.slice.call(this);
+
+  for (let i = 0; i < arr.length; i++) {
+    if (!arr.hasOwnProperty(i)) continue;
+
+    if (fn.call(context, arr[i], i, this)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+Array.prototype.selfSome = selfSome;
+
+const res = [1, 2, 3].selfSome((v, i, arr) => v > 2);
+console.log(res); // true
+```
+
+### 实现数组的 reduce 方法
+
+```javascript
+if (!Array.prototype.selfReduce) {
+  Object.defineProperty(Array.prototype, 'selfReduce', {
+    value: function (callback, initialValue) {
+      if (!this)
+        throw new Error('Array.prototype.reduce called on null or undefined.');
+
+      if (typeof callback !== 'function')
+        throw new Error('callback is not  a function');
+
+      var o = Object(this);
+
+      var len = o.length >>> 0;
+
+      var k = 0;
+      var value;
+
+      if (arguments.length >= 2) {
+        value = arguments[1];
+      } else {
+        // 考虑是稀疏数组的情况，如果没有值，则索引 +1
+        while (k < len && !(k in o)) {
+          k++;
+        }
+
+        // 索引大于等于数组长度，数组为空的情况
+        if (k >= len) {
+          throw new TypeError('Reduce of empty array with no initialValue');
+        }
+
+        // 设置初始值
+        value = o[k++];
+      }
+
+      while (k < len) {
+          // 考虑稀疏数组的情况，有值才执行回调
+          if (k in o) {
+            // pre, cur, i, array
+            value = callback(value, o[k], k, o);
+          }
+
+          k++;
+        }
+
+      return value;
+    },
+  });
+}
+
+const res = [1, , , 2, 3].selfReduce((v, i) => {
+  return v + i;
+});
+
+console.log(res, 'res'); // 6
+```
