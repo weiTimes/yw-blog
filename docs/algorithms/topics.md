@@ -50,43 +50,30 @@ var twoSum = function (nums, target) {
     2.左括号必须以正确的顺序闭合。
 
 ```javascript
-function checkStr(str) {
-  if (!str) return;
+function isValid(str) {
+  if (!str) return false;
 
-  const map = {
+  var stack = [];
+  var map = {
     '[': ']',
     '{': '}',
     '(': ')',
   };
 
-  let i = 0;
-  const stack = [];
+  for (var i = 0; i < str.length; i++) {
+    var cur = str[i];
 
-  while (i < str.length) {
-    const keys = Object.keys(map);
-
-    if (i === 0 && !keys.includes(str[i])) {
-      return false;
-    }
-
-    if (keys.includes(str[i])) {
-      stack.push(str[i]);
+    if (cur in map) {
+      stack.push(cur);
     } else {
-      const topStr = stack.pop();
-
-      if (map[topStr] !== str[i]) {
+      var top = stack.pop();
+      if (cur !== map[top]) {
         return false;
       }
     }
-
-    i++;
   }
 
-  if (stack.length === 0) {
-    return true;
-  } else {
-    return false;
-  }
+  return !stack.length;
 }
 
 const res = checkStr('{([])}');
@@ -134,4 +121,147 @@ function sum(num1, num2) {
 }
 
 console.log(sum('12', '18')); // 30
+```
+
+### 剑指 Offer 58 - I. 翻转单词顺序
+
+#### 双指针法
+
+```javascript
+var reverseWords = function(s) {
+  if(!s) return '';
+
+  s = s.trim();
+  var len = s.length;
+  var i = len - 1;
+  var j = len - 1;
+  var res = [];
+
+  while(i >= 0) {
+    while(i >= 0 && s[i] !== ' ') {
+      i--;
+    }
+
+    res.push(s.substring(i + 1, j + 1));
+
+    while(s[i] === ' ') {
+      i--;
+    }
+
+    j = i;
+  }
+
+  return res.join(' ');
+};
+```
+
+#### 使用库函数
+
+```javascript
+var reverseWords = function (s) {
+  if (!s) return '';
+
+  s = s.trim();
+  s = s
+    .split(' ')
+    .filter((s) => !!s)
+    .reverse()
+    .join(' ');
+
+  return s;
+};
+```
+
+### 104-二叉树的最大深度
+
+DFS，深度优先搜索
+
+```javascript
+var maxDepth = function(root) {
+  if(!root) return 0;
+
+  return Math.max(maxDepth(root.left), maxDepth(root.right)) + 1;
+};
+```
+
+### 141. 环形链表
+
+```javascript
+var hasCycle = function(head) {
+    if(!head) return false;
+
+    var slow = head;
+    var fast = head;
+
+    while(fast && fast.next) {
+      fast = fast.next.next;
+      slow = slow.next;
+
+      if(fast === slow) {
+        return true;
+      }
+    }
+
+    return false;
+};
+```
+
+### 300. 最长递增子序列
+
+#### 动态规划
+
+```javascript
+var lengthOfLIS = function(nums) {
+  if(nums.length < 2) return nums.length;
+
+  var len = nums.length;
+
+  var dp = new Array(len).fill(1);
+
+  for(var i = 0; i < len; i++) {
+    for(var j = 0; j < i; j++) {
+      if(nums[j] < nums[i]) {
+        dp[i] = Math.max(dp[i], dp[j] + 1);
+      }
+    }
+  }
+
+  return Math.max(...dp);
+};
+```
+
+#### 贪心 + 二分查找
+
+```javascript
+var lengthOfLIS = function(nums) {
+  if(nums.length < 2) return nums.length;
+
+  var len = nums.length;
+  var res = [nums[0]];
+
+  for(var i = 1; i < len; i++) {
+    var cur = nums[i];
+    // 贪心
+    if(cur > res[res.length - 1]) {
+      res.push(cur);
+    } else {
+      // 二分查找，找到正好比某个元素大的位置
+      var left = 0;
+      var right = res.length - 1;
+
+      while(left < right) {
+        var middle = left + right >> 1;
+        if(cur > res[middle]) {
+          left += 1;
+        } else {
+          right = middle;
+        }
+      }
+
+      res[left] = cur;
+    }
+  }
+
+  return res.length;
+};
 ```

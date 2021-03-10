@@ -8,12 +8,26 @@ module.exports = {
   favicon: 'img/favicon.ico',
   organizationName: 'facebook', // Usually your GitHub org/user name.
   projectName: 'docblog', // Usually your repo name.
+  themes: ['@docusaurus/theme-live-codeblock'],
+  plugins: [
+    [
+      require.resolve('@easyops-cn/docusaurus-search-local'),
+      {
+        // `hashed` is recommended as long-term-cache of index file is possible.
+        hashed: true,
+        language: ['en'],
+      },
+    ],
+  ],
   themeConfig: {
-    algolia: {
-      algoliaOptions: {},
-      apiKey: 'UBSXNKMC9S',
-      indexName: 'ywhoo',
+    liveCodeBlock: {
+      playgroundPosition: 'bottom',
     },
+    // algolia: {
+    //   algoliaOptions: {},
+    //   apiKey: 'UBSXNKMC9S',
+    //   indexName: 'ywhoo',
+    // },
     navbar: {
       title: 'Ywhoo',
       logo: {
@@ -52,6 +66,9 @@ module.exports = {
       {
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
+          routeBasePath: 'docs',
+          include: ['**/*.md', '**/*.mdx'],
+          showLastUpdateTime: true,
           // Please change this to your repo.
           editUrl: 'https://github.com/weiTimes/yw-blog/edit/master',
         },

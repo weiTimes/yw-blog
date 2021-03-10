@@ -226,6 +226,7 @@ function F() {}
 F.prototype = Person.prototype;
 
 Ywhoo.prototype = new F();
+Ywhoo.prototype.constructor = Ywhoo;
 
 var yw = new Ywhoo();
 console.log(yw);
