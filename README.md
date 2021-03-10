@@ -2,14 +2,14 @@
 
 [我的博客](https://blog.ywhoo.cn)是使用[Docusaurus 2](https://v2.docusaurus.io/)搭建的，它是一个现代化的静态站点生成器。
 
-## TODO
+## 支持的特性
 
-- [x] 部署
+- [x] 脚本部署
 - [x] 子域名
 - [x] https
 - [ ] 支持Typescript
 - [ ] travis 自动部署
-- [ ] 持续更新前端进阶和博客内容
+- [x] 持续更新前端进阶和博客内容
 
 ## Installation
 
