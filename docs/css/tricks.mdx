@@ -1,0 +1,187 @@
+---
+id: tricks
+title: CSS 技巧
+---
+
+import {
+  Mdx,
+  Highlight,
+  Tooltip,
+  UnderlineText,
+  UnderlineLinearText,
+  ExtendButton,
+  FrostedGlass,
+} from '../../src/components';
+
+<Mdx>
+  <Highlight color='#25c2a0'>Docusaurus green</Highlight>
+</Mdx>
+
+### Text tooltips
+
+```tsx title="tsx"
+export const Tooltip = () => {
+  return (
+    <div className='highlight tooltip' data-tip='This css tooltip'>
+      I have a Tooltip
+    </div>
+  );
+};
+```
+
+```css title="css"
+.tooltip {
+  position: relative;
+  margin-top: 20px;
+  cursor: pointer;
+}
+
+.tooltip:hover.tooltip[data-tip]:not([data-tip=''])::before {
+  content: attr(data-tip);
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 15px 10px;
+  border-radius: 3px;
+  max-width: 300px;
+  width: 250%;
+  left: 50%;
+  transform: translate(-50%, 0);
+  bottom: calc(100%);
+  border-bottom: 3px solid yellowgreen;
+}
+
+.tooltip:hover.tooltip[data-tip]:not([data-tip=''])::after {
+  content: '';
+  width: 0;
+  height: 0;
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  margin-left: -4px;
+  border-style: solid;
+  border-color: yellowgreen transparent transparent transparent;
+  border-width: 8px 8px 0;
+}
+```
+
+<Mdx>
+  <Tooltip />
+</Mdx>
+
+### 自定义下划线
+
+```tsx title="tsx"
+export const UnderlineText = () => {
+  return <div className='shadow-underline'>我是自定义 阴影下划线</div>;
+};
+```
+
+```css title="css"
+.shadow-underline {
+  display: inline;
+  box-shadow: inset 0 -0.23em white, inset 0 -0.25em green, inset 0 -0.3em white,
+    inset 0 -0.4em red;
+  text-shadow: 0.04em 0 white, -0.04em 0 white;
+}
+```
+
+<Mdx>
+  <UnderlineText />
+</Mdx>
+
+```tsx title="tsx"
+export const UnderlineLinearText = () => {
+  return <div className='shadow-underline-linear'>我是自定义 阴影下划线</div>;
+};
+```
+
+```css title="css"
+.shadow-underline-linear {
+  display: inline;
+  background: linear-gradient(90deg, black 50%, white 0) 0 78%/4px 2px repeat-x,
+    linear-gradient(90deg, white 50%, black 0) 0 82%/4px 2px repeat-x;
+  text-shadow: 0.04em 0 white, -0.04em 0 white;
+}
+```
+
+<Mdx>
+  <UnderlineLinearText />
+</Mdx>
+
+### 扩大点击区域
+
+```tsx title="tsx"
+export const ExtendButton = () => {
+  return (
+    <div className='button-extend' onClick={() => alert('hello')}>
+      扩大点击区域
+    </div>
+  );
+};
+```
+
+```css title="css"
+.button-extend {
+  height: 40px;
+  line-height: 40px;
+  padding: 0 10px;
+  color: #fff;
+  background: #0aa;
+  cursor: pointer;
+  position: relative;
+}
+
+.button-extend::before {
+  content: '';
+  position: absolute;
+  width: 150%;
+  height: 150%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.2);
+}
+```
+
+<Mdx>
+  <ExtendButton />
+</Mdx>
+
+### 毛玻璃效果
+
+```tsx title="tsx"
+export const FrostedGlass = () => {
+  return (
+    <div className='frosted-glass'>
+      <div className='box'></div>
+      <img src='https://cdn.pixabay.com/photo/2020/12/13/16/21/stork-5828727_1280.jpg' />
+    </div>
+  );
+};
+```
+
+```css title="css"
+.frosted-glass {
+  position: relative;
+}
+
+.frosted-glass img {
+  width: 200px;
+  object-fit: contain;
+}
+
+.frosted-glass .box {
+  width: 100px;
+  height: 100px;
+  backdrop-filter: blur(10px);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+```
+
+<Mdx>
+  <FrostedGlass />
+</Mdx>

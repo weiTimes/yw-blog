@@ -1,0 +1,105 @@
+.highlight {
+  background-color: #0aa;
+  border-radius: 3px;
+  color: #fff;
+  padding: 8px;
+}
+
+.mdx {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 160px;
+  border: 1px solid #9ad;
+  margin-bottom: 20px;
+  border-radius: 3px;
+}
+
+.tooltip {
+  position: relative;
+  margin-top: 20px;
+  cursor: pointer;
+}
+
+.tooltip:hover.tooltip[data-tip]:not([data-tip=''])::before {
+  content: attr(data-tip);
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 15px 10px;
+  border-radius: 3px;
+  max-width: 300px;
+  width: 250%;
+  left: 50%;
+  transform: translate(-50%, 0);
+  bottom: calc(100% + 12px);
+  border-bottom: 3px solid yellowgreen;
+  cursor: default;
+}
+
+.tooltip:hover.tooltip[data-tip]:not([data-tip=''])::after {
+  content: '';
+  width: 0;
+  height: 0;
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  margin-left: -4px;
+  border-style: solid;
+  border-color: yellowgreen transparent transparent transparent;
+  border-width: 8px 8px 0;
+}
+
+.shadow-underline {
+  display: inline;
+  box-shadow: inset 0 -0.23em white, inset 0 -0.25em green, inset 0 -0.3em white,
+    inset 0 -0.4em red;
+  text-shadow: 0.04em 0 white, -0.04em 0 white;
+}
+
+.shadow-underline-linear {
+  display: inline;
+  background: linear-gradient(90deg, black 50%, white 0) 0 78%/4px 2px repeat-x,
+    linear-gradient(90deg, white 50%, black 0) 0 82%/4px 2px repeat-x;
+  text-shadow: 0.04em 0 white, -0.04em 0 white;
+}
+
+.button-extend {
+  height: 40px;
+  line-height: 40px;
+  padding: 0 10px;
+  color: #fff;
+  background: #0aa;
+  cursor: pointer;
+  position: relative;
+}
+
+.button-extend::before {
+  content: '';
+  position: absolute;
+  width: 150%;
+  height: 150%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.frosted-glass {
+  position: relative;
+}
+
+.frosted-glass img {
+  width: 200px;
+  object-fit: contain;
+}
+
+.frosted-glass .box {
+  width: 100px;
+  height: 100px;
+  backdrop-filter: blur(10px);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}

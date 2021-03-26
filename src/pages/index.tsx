@@ -1,12 +1,19 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import clsx from 'clsx';
 import Layout from '@theme/Layout';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import useBaseUrl from '@docusaurus/useBaseUrl';
+import axios from 'axios';
+
 import styles from './styles.module.css';
 
 import AVATAR from '../../static/img/avatar_employee.png';
+
+interface IWords {
+  content: string;
+  author: string;
+}
 
 const features = [
   {
@@ -56,6 +63,16 @@ function Feature({ imageUrl, title, description }) {
 function Home() {
   const context = useDocusaurusContext();
   const { siteConfig = {} } = context;
+  const [words, setWords] = useState<IWords>();
+
+  useEffect(() => {
+    axios
+      .get<{ data: IWords }>('https://v1.alapi.cn/api/mingyan')
+      .then((res) => {
+        setWords(res.data.data);
+      });
+  }, []);
+
   return (
     <Layout
       title={`我的首页`}
@@ -79,6 +96,14 @@ function Home() {
           {features && features.length > 0 && (
             <section className={styles.features}>
               <div className='container'>
+                <div className={styles.wordsWrap}>
+                  <div className={styles.words}>
+                    {words?.content}{' '}
+                    {words && (
+                      <span className={styles.author}>- {words?.author}</span>
+                    )}
+                  </div>
+                </div>
                 <div className='row'>
                   {features.map((props, idx) => (
                     <Feature key={idx} {...props} />

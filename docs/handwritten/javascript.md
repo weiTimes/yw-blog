@@ -3,6 +3,71 @@ id: handwritten-javascript
 title: Javascript 手写代码
 ---
 
+### 实现并行请求，支持最大并发数控制
+
+```javascript
+const axios = require('axios');
+
+function multiRequest(urls, maxNum) {
+  if (!maxNum) return;
+
+  const len = urls.length;
+  const results = new Array(len).fill(false);
+  let count = 0; // 已完成 成功 | 失败
+
+  return new Promise((resolve, reject) => {
+    // 最大并行请求数量
+    while (count < maxNum) {
+      request();
+    }
+
+    function request() {
+      // 正在进行中的请求索引
+      let current = count++;
+
+      // 所有请求结束
+      if (current >= len) {
+        !results.includes(false) && resolve(results);
+
+        return;
+      }
+
+      const url = urls[current];
+
+      axios(url)
+        .then((res) => {
+          results[current] = res;
+
+          // 当前请求已结束，如果还有请求，进入下一次请求（递归调用）
+          if (current < len) {
+            request();
+          }
+        })
+        .catch((err) => {
+          results[current] = err;
+
+          if (current < len) {
+            request();
+          }
+        });
+    }
+  });
+}
+
+multiRequest(
+  [
+    'https://v1.alapi.cn/api/mryw',
+    'https://v1.alapi.cn/api/joke',
+    'https://v1.alapi.cn/api/mingyan',
+  ],
+  2
+).then((res) => {
+  const logs = res.map((r) => r.data);
+
+  console.log(logs, 'res');
+});
+```
+
 ### 判断对象的数据类型
 
 ```javascript
