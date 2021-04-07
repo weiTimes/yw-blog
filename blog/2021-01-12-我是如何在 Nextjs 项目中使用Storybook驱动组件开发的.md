@@ -6,7 +6,7 @@ author_title: 前端攻城狮
 author_url: https://github.com/weiTimes
 author_image_url: https://avatars2.githubusercontent.com/u/21688593?s=460&u=09db1866a0350eb8c4dd0389b22a596d2b081b4b&v=4
 tags: [React, storybook]
-description: 
+description:
 ---
 
 在使用 `React`开发组件时经常会有一些苦恼，比如当一个组件的复杂度逐步上升时，它所拥有的状态不容易追溯；当需要查看某种状态的组件时，可能需要手动更改组件的属性或是更改接口返回的数据（数据驱动的组件）等等。于是我就去了解并学习 `Storybook`，然后组织了一次分享会，这也是我们团队的第一次技术分享。
@@ -16,6 +16,8 @@ description:
 ![image-20210112094407173](https://raw.githubusercontent.com/weiTimes/PicGo/main/image-20210112094407173.png)
 
 上图是分享会 ppt 的封面，感兴趣的同学可以私信我，接下来进入正题。
+
+<!--truncate-->
 
 ## 动机
 
@@ -27,89 +29,81 @@ description:
 
 这篇文章主要给大家分享一下几点：
 
-* 介绍 Storybook
-* 通过一个小例子展示如何在 `Next.js` 中使用 Storybook
-* 我的代码编写习惯
-
-<!--truncate-->
+- 介绍 Storybook
+- 通过一个小例子展示如何在 `Next.js` 中使用 Storybook
+- 我的代码编写习惯
 
 ## 要求
 
 因为包含了实践，可能有以下几点要求，不过不用担心，只要你能看懂就行：
 
-* 示例是基于 `Next.js` 的，这个我在上一篇文章中有讲到如何搭建 `Next.js` 项目，[可以点击这里](https://github.com/weiTimes/nextapp-startup)把我搭建的脚手架克隆到本地，以便可以跟着动手。
-* 因为是基于上一篇文章所搭建的脚手架，所以它所拥有的特性也需要了解，比如 `Typescript`、`styled-component`。
+- 示例是基于 `Next.js` 的，这个我在上一篇文章中有讲到如何搭建 `Next.js` 项目，[可以点击这里](https://github.com/weiTimes/nextapp-startup)把我搭建的脚手架克隆到本地，以便可以跟着动手。
+- 因为是基于上一篇文章所搭建的脚手架，所以它所拥有的特性也需要了解，比如 `Typescript`、`styled-component`。
 
 ## 介绍 Storybook
 
-storybook是一个开源工具，为React、Vue、Angular等框架提供一个沙箱环境，可独立地开发UI组件；它更有组织和高效地构建出令人惊叹的 UIs。
-
-
+storybook 是一个开源工具，为 React、Vue、Angular 等框架提供一个沙箱环境，可独立地开发 UI 组件；它更有组织和高效地构建出令人惊叹的 UIs。
 
 ![](https://raw.githubusercontent.com/weiTimes/PicGo/main/63501763-88dbf600-c4cc-11e9-96cd-94adadc2fd72.png)
 
-
-
 ### 提供强大的 UIs
 
-* 独立构建组件
+- 独立构建组件
   创建组件时不需要竖起屏幕，不需要处理数据，也不需要构建业务逻辑。
   ![](https://raw.githubusercontent.com/weiTimes/PicGo/main/build-canvas.png)
 
-* 模拟难以达到的用例
+- 模拟难以达到的用例
   在一个应用中渲染关键状态是不容易的
   ![](https://raw.githubusercontent.com/weiTimes/PicGo/main/build-cases.png)
 
-* 用例作为一个故事
-  将用例保存为 Javascript 中的故事，以便在开发、测试和QA期间重新访问。
+- 用例作为一个故事
+  将用例保存为 Javascript 中的故事，以便在开发、测试和 QA 期间重新访问。
   ![](https://storybook.js.org/images/home/build-sidebar.png)
 
-* 使用插件减少工作流程
-  使用插件可以更快地构建UI，组件文档化，并简化工作流程。
+- 使用插件减少工作流程
+  使用插件可以更快地构建 UI，组件文档化，并简化工作流程。
 
 ![](https://raw.githubusercontent.com/weiTimes/PicGo/main/build-addons.png)
 
 ### 组件更具可靠性
 
-* 确保一致的用户体验
+- 确保一致的用户体验
   每当写一个故事，就得到一种状态的视觉效果。快速地浏览故事，检查最贱 UI 的正确性。
   ![](https://raw.githubusercontent.com/weiTimes/PicGo/main/test-visual-20210112102804789.png)
 
-* 自动回归测试代码
+- 自动回归测试代码
   使用官方插件 Storyshots 启动代码快照。
   ![](https://raw.githubusercontent.com/weiTimes/PicGo/main/test-snapshot.png)
 
-* 单元测试组件
+- 单元测试组件
   对组件进行单元测试确保组件能正常工作。
   ![](https://raw.githubusercontent.com/weiTimes/PicGo/main/test-unit.png)
 
-* 基于每次提交像素级地捕获UI变化
-  用视觉测试工具查明UI的变化。
+- 基于每次提交像素级地捕获 UI 变化
+  用视觉测试工具查明 UI 的变化。
   ![](https://raw.githubusercontent.com/weiTimes/PicGo/main/test-visual-regression.png)
 
 ### 分享和重用所有东西
 
-* 在项目中查找任何组件
-  Storybook 可搜索编写的任何组件，为你的UI组件提供真实信息的单一来源。
+- 在项目中查找任何组件
+  Storybook 可搜索编写的任何组件，为你的 UI 组件提供真实信息的单一来源。
   ![](https://raw.githubusercontent.com/weiTimes/PicGo/main/share-search.png)
 
-* 开发过程中获得及时反馈
-  通过 Storybook 部署到云端，与团队协作实现UI。
+- 开发过程中获得及时反馈
+  通过 Storybook 部署到云端，与团队协作实现 UI。
   ![](https://storybook.js.org/images/home/share-collaborate.png)
 
-* 跨端跨应用共享组件
+- 跨端跨应用共享组件
   每个故事都是一个用例，团队成员可以找到它并决定是否重用。
   ![](https://storybook.js.org/images/home/share-reuse.png)
 
-* 生成文档
+- 生成文档
   编写 markdown/MDX，为组件库和设计系统生成可定制化的文档。
   ![](https://raw.githubusercontent.com/weiTimes/PicGo/main/share-document.png)
 
 ## 使用 Storybook
 
-下面我会通过一个示例想大家展示 Storybook 是如何工作的，期间也能看到我是如何使用结合 Typescript、styled-components以及我的编码习惯。
-
-
+下面我会通过一个示例想大家展示 Storybook 是如何工作的，期间也能看到我是如何使用结合 Typescript、styled-components 以及我的编码习惯。
 
 ### 安装
 
@@ -254,9 +248,9 @@ export default ProductOptimCard;
 export default function Home() {
   return (
     <Conotainer>
-       <ProductOptimCard
-          data={{ isMustDo: false, isFinish: false, title: '单品标题优化' }}
-        />
+      <ProductOptimCard
+        data={{ isMustDo: false, isFinish: false, title: '单品标题优化' }}
+      />
     </Conotainer>
   );
 }
@@ -344,7 +338,7 @@ module.exports = {
   // ...
   webpackFinal: async (config, { configType }) => {
     config.resolve.alias['@'] = path.resolve(__dirname, '../src');
-    
+
     return config;
   },
 };
@@ -362,27 +356,27 @@ module.exports = {
 
 **内容组件：**接收 props 数据、可编写 story 组件驱动开发。
 
-#### story组件编写的大致顺序
+#### story 组件编写的大致顺序
 
-* Typescript 定义组件接收的参数
-* 为可选的类型设置默认值
-* 编写 story 描述不同状态的组件
+- Typescript 定义组件接收的参数
+- 为可选的类型设置默认值
+- 编写 story 描述不同状态的组件
 
 #### 组件编写顺序
 
 通常一个组件引入的三方库在最顶部，其次是自定义组件，所以我这里的顺序值得是组件中变量定义的位置，以下是我所习惯的定义顺序（从上往下），每个区域隔一行：
 
-* 三方库
+- 三方库
 
-* 自定义组件
+- 自定义组件
 
-* 图片常量
+- 图片常量
 
-* Typescript 接口
+- Typescript 接口
 
-* 样式组件
+- 样式组件
 
-* 组件区
+- 组件区
 
 一个最小化的示例代码：
 
@@ -399,8 +393,8 @@ interface IProps {}
 const Container = styled.div``;
 
 const DemoComp: React.FC<IProps> = () => {
-  return <Container></Container>
-}
+  return <Container></Container>;
+};
 
 export default DemoComp;
 ```
