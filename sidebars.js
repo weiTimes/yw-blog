@@ -40,6 +40,7 @@ module.exports = {
         ],
       },
     ],
+    架构设计: ['structure/react-ssr'],
     Typescript: ['typescript/base'],
     CSS: ['css/tricks'],
     规范: ['styleguide/commit', 'styleguide/git-flow'],

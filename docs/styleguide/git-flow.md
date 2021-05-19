@@ -74,7 +74,7 @@ git push origin develop
 
 ![--no-ff](https://ypyun.ywhoo.cn/assets/20210517153129.png)
 
-### release 预发布分支
+#### release 预发布分支
 
 从 develop 检出，必须合并到 develop 和 master。
 
@@ -108,7 +108,7 @@ git merge --no-ff release-2.0.0
 git branch -d release-2.0.0
 ```
 
-### hotfix 修复 bug 分支
+#### hotfix 修复 bug 分支
 
 ![hotfix](https://ypyun.ywhoo.cn/assets/20210517155558.png)
 
@@ -141,7 +141,7 @@ git branch -d hotfix-2.0.1
 
 在它的 github README 中根据文档安装好 git-flow 和集成进 shell。- _查看 Installing git-flow & integration with your shell 小节_
 
-安装好后执行 `git flow init -d` 初始化。
+安装好后执行 `git flow init [-d]` 初始化，然后将刚创建的本地分支都推送到远程 `git push origin --all`。
 
 ### 开发新功能
 
@@ -171,10 +171,67 @@ git flow feature finish feature-1.0
 
 ## git-flow 在 CI/CD 中的应用
 
-目标
+下图是我的 git 分支工作流和 jenkins 多分支流水线的流程图：
+
+![flow](https://ypyun.ywhoo.cn/assets/20210518155234.png)
+
+假设接下来要开发版本为 v1.0.2，功能包含订单和财务模块，当前默认的分支只有 develop 和 master，首先创建 `feature-order` 和 `feature-finance`:
+
+```shell
+git flow feature start feature-order
+git flow feature start feature-finance
+
+# 推送到相应的 feature 分支
+git flow feature publish feature-order
+# 拉取相应的 feature 分支
+git flow feature pull feature-order
+```
+
+当订单先开发完成，想先部署到测试环境给到测试人员，需执行以下步骤：
+
+```shell
+# 完成订单功能开发，自动合并到 develop 并删除 feature-order
+git flow feature finish feature-order
+# develop 中的订单功能准备就绪，检出预发布分支，推送时会触发 jenkins 的构建任务，自动部署到测试环境
+git flow release start release-1.0.2.0-order
+```
+
+在测试的过程中，需要修复问题，可以直接在 release-1.0.2.0-order 上修改，修改后提交会自动触发构建任务。当测试完没有问题时，这时候就需要部署到线上了，执行以下步骤：
+
+```shell
+# 合并到 master，删除 release-1.0.2.0-order
+git flow release finish release-1.0.2.0-order
+```
+
+部署到线上环境后，遇到需要紧急修复的 bug 时，在 master 上检出 hotfix 分支，用于修复 bug：
+
+```shell
+# 检出 hotfix-order
+git flow hotfix start hotfix-order
+# 合并到 master
+git flow hotfix finish hotfix-order
+```
+
+如需要在线上版本增加新的小改动，需要用到 support 分支[还处于试验阶段，暂时不使用]：
+
+```shell
+# 检出 support-story
+git flow support start support-story
+# 合并到 master
+git flow support finish support-story
+```
+
+到这里订单功能开发到线上可能涉及到的流程已经介绍完了，财务功能同上，至于 jenkins 如何配置就不在这里展开了，大致的思路就是配置多分支流水线，只匹配 `release-*,master` 的分支，Jenkinsfile 中对 replease-\* 分支走部署至测试环境的流水线，master 走部署至线上环境的流水线，当然需要支持参数化配置部署，及可选择部署到测试或是线上，如果不清楚如何搭建 jenkins 和配置多分支流水线，可以参考我之前写的一片文章[《使用 Jenkins 构建 CI/CD 之多分支流水线指北（实战）》](https://juejin.cn/post/6883769774564884488)。
+
+## 总结
+
+git-flow 的分支管理策略很好地解决了我目前关于分支管理混乱的问题，极大地提升了团队协作的效率，相应地对 CI/CD 流程作了一定的优化，希望能对大家有所启发。
 
 ## 参考
 
+- [The gitflow workflow - in less than 5 mins.](https://www.youtube.com/watch?v=1SXpE08hvGs)
+- [Git Flow Like a Pro!](https://www.youtube.com/watch?v=BYrt6luynCI)
 - [Git 分支管理策略](https://www.ruanyifeng.com/blog/2012/07/git.html)
 - [A successful Git branching model](https://nvie.com/posts/a-successful-git-branching-model/)
 - [gitflow](https://github.com/nvie/gitflow/)
+- [Manage Development and Delivery Workflow with JGit-Flow and Jenkins-Pipeline](https://www.fyber.com/engineering/manage-development-and-delivery-workflow-with-jgit-flow-and-jenkins-pipeline-part-i/)

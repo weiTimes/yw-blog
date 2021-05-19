@@ -1348,3 +1348,113 @@ import bigNumber from 'yw-big-number';
 
 console.log(bigNumber('999', '1')); // 1000
 ```
+
+### webpack 实现 SSR 打包
+
+#### 为什么需要服务端渲染，它有什么优势？
+
+客户端渲染在页面加载时，需要先获取并解析 html，在解析 html 的过程中，如果遇到外部的 js, css，需要等拿到之后再往后解析，当然浏览器会对资源进行预请求，而且非关键性资源不会阻塞 html 的解析，在解析过程中页面处于白屏，解析完成后页面开始展现，此时可能只有 loading，js 脚本正在请求接口数据并等待返回，拿到数据后才开始展示真正的内容，如果有图片资源，此时图片还是不可见的，需要等待加载完成，到这里页面才是可交互的。
+
+可以发现，页面在加载的时候经历了一系列步骤，才真正展现在用户面前，而服务端渲染的优势是，静态资源和数据是随着 html 一起拿到的，浏览器拿到 html 后直接解析，等 js 脚本执行完成后就完全可交互，它主要以下几点优势：
+
+- 减少白屏时间
+  - 所有模板等静态资源都存储在服务端
+  - 内网机器拉取数据更快
+  - 一个 html 返回所有数据
+- 对 SEO 友好
+
+总结：服务端渲染的核心是减少请求。
+
+![服务端渲染流程](https://ypyun.ywhoo.cn/assets/20210518204002.png)
+
+![CSR vs SSR](https://ypyun.ywhoo.cn/assets/20210518204348.png)
+
+#### 代码实现思路
+
+1. 配置 `webpack.ssr.js`，将客户端代码以 umd 规范导出
+2. 服务端代码使用 express 实现，将导出的客户端代码引入，通过 ReactDOMServer 的 renderToString 方法将其转换成字符串，放入模板中的 root 节点，然后注册路由，开启监听端口服务。
+
+#### 问题
+
+1. 执行 `node server/index.js` 时，报 `self is not defined`，由于服务端没有 self 全局变量，在执行的最顶部加入如下判断：
+
+```javascript
+if (typeof self === 'undefined') {
+  global.self = {};
+}
+```
+
+2. 打包出的组件需要兼容写法，如服务端模块使用的是 commonjs 写法，客户端编写组价你的时候也需要遵循 commonjs 规范。
+
+3. 将 fetch 或 ajax 请求方法改成 isomorphic-fetch 或 axios。
+
+4. 样式问题（nodejs 无法解析 css）
+   1. 服务端打包通过 ignore-loader 忽略掉 css 的解析
+   2. 将 style-loader 替换成 isomorphic-style-loader（css module 的写法，不能直接引入）
+
+使用打包出来的浏览器端 html 为模板，设置占位符，动态地插入组件：
+
+```javascript title="server/index.js"
+const template = fs.readFileSync(
+  path.join(__dirname, '../dist/index.html'),
+  'utf-8'
+);
+
+const useTemplate = (html) => template.replace('<!--HTML_PLACEHOLDER-->', html);
+
+app.get('/app', (req, res) => {
+  const html = useTemplate(renderToString(App));
+
+  res.status(200).send(html);
+});
+```
+
+实现后会有白屏的问题。
+
+5. 首屏数据如何处理？
+
+服务端获取数据后，替换占位符。
+
+### 优化构建时命令的显示日志
+
+使用 `friendly-errors-webpack-plugin` 提供友好的构建信息提示。
+
+### 构建异常和中断处理
+
+主动捕获并处理构建错误：
+
+- compiler 在每次构建结束后会触发 done 这个 hook
+- process.exit 主动处理构建报错
+
+```javascript
+module.exports = {
+  plugins: [
+    function () {
+      // this 指向 compiler
+      this.hooks.done.tap('done', (stats) => {
+        if (
+          stats.compilation.errors &&
+          stats.compilation.errors.length &&
+          process.argv.indexOf('--watch') === -1
+        ) {
+          process.exit(1); // 抛出异常，终端就知道构建失败了
+        }
+      });
+    },
+  ],
+};
+```
+
+## 编写可维护的 webpack 构建配置
+
+### 构建配置抽离成 npm 包的意义
+
+- 通用性
+  - 开发人员无需关注构建配置
+  - 统一团队构建脚本
+- 可维护性
+  - 构建配置合理的拆分
+  - README 文档、ChangeLog 文档等
+- 质量
+  - 冒烟测试、单元测试、测试覆盖率
+  - 持续集成
