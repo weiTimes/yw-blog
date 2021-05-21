@@ -3,6 +3,8 @@ id: webpack
 title: 玩转webpack
 ---
 
+> 源码地址：[玩转 webpack](https://github.com/weiTimes/source-code-realize/tree/master/play-webpack)
+
 ## 初识 webpack
 
 配置文件：`webpack.config.js`
@@ -1458,3 +1460,22 @@ module.exports = {
 - 质量
   - 冒烟测试、单元测试、测试覆盖率
   - 持续集成
+
+### 构建配置管理的可选方案
+
+- 通过多个配置文件管理不同环境的构建，webpack --config 参数进行控制
+  - 基础配置 webpack.common.js
+  - 开发环境 webpack.dev.js
+  - 生产环境 webpack.prod.js
+  - SSR 环境 webpack.ssr.js
+- 将构建配置设计成一个库统一管理
+  - 规范：git commit 日志，README，Eslint 规范
+  - 质量：冒烟测试、单元测试、测试覆盖率和 CI
+
+使用 `webpack-merge` 合并配置。
+
+### 功能模块设计和目录结构
+
+![功能模块设计](https://ypyun.ywhoo.cn/assets/20210519235209.png)
+
+![目录结构设计](https://ypyun.ywhoo.cn/assets/20210519235439.png)

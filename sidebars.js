@@ -34,6 +34,8 @@ module.exports = {
         type: 'category',
         label: 'React',
         items: [
+          'framework/react-roadmap',
+          'framework/react-interview',
           'framework/react-vue',
           'framework/react-mini',
           'framework/react-secret',
