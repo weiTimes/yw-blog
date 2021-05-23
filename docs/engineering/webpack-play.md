@@ -1,5 +1,5 @@
 ---
-id: webpack
+id: webpack-play
 title: 玩转webpack
 ---
 
@@ -1449,6 +1449,8 @@ module.exports = {
 
 ## 编写可维护的 webpack 构建配置
 
+这一章节会根据之前的配置，编写一个可维护的 webpack 构建配置库，它遵循完整库的编写规范，包含开发规范、冒烟测试、单元测试、持续集成等，最后发布到 npm 社区。
+
 ### 构建配置抽离成 npm 包的意义
 
 - 通用性
@@ -1479,3 +1481,313 @@ module.exports = {
 ![功能模块设计](https://ypyun.ywhoo.cn/assets/20210519235209.png)
 
 ![目录结构设计](https://ypyun.ywhoo.cn/assets/20210519235439.png)
+
+### 使用 eslint 规范开发
+
+由于是基础库的开发，只需要用到 airbnb 的 `eslint-config-airbnb-base` 版本。
+
+安装依赖:
+
+```shell
+yarn add eslint babel-eslint eslint-config-airbnb-base -D
+```
+
+配置 `.eslintrc.js`:
+
+```javascript
+module.exports = {
+  parser: 'babel-eslint',
+  extends: 'airbnb-base',
+  env: {
+    browser: true,
+    node: true,
+  },
+  rules: {
+    'comma-dangle': 'off',
+    'no-console': 'off',
+    'jsx-quotes': 'off',
+    'global-require': 'off',
+    'import/extensions': 'off',
+    'jsx-a11y/click-events-have-key-events': 'off',
+    'jsx-a11y/no-static-element-interactions': 'off',
+    'no-restricted-globals': 'off',
+  },
+};
+```
+
+将 eslint 检查加入 scripts:
+
+```json title="package.json"
+{
+  "scripts": {
+    "eslint": "eslint config --fix"
+  }
+}
+```
+
+### 冒烟测试介绍和实际运用
+
+冒烟测试时指对提交测试的软件在进行详细深入的测试之前进行的测试，这种预测试的目的是暴露导致软件需重新发布的基本功能失效等严重问题。
+
+冒烟测试执行：
+
+- 判断构建是否成功
+- 构建产物是否有内容
+  - 是否有 js, css 等静态资源文件
+  - 是否有 html 文件
+
+安装需要的依赖:
+
+```shell
+yarn add rimraf webpack mocha assert glob-all
+```
+
+编写判断构建是否成功的测试用例：
+
+```javascript title="test/smoke/index.js"
+const rimraf = require('rimraf');
+const webpack = require('webpack');
+const Mocha = require('mocha');
+const path = require('path');
+
+const mocha = new Mocha({
+  timeout: '10000',
+});
+
+// 删除旧的构建产物
+// process.chdir(); // 改变工作目录
+
+rimraf('../../dist', () => {
+  const prodConfig = require('../../config/webpack.prod');
+
+  webpack(prodConfig, (err, stats) => {
+    if (err) {
+      console.error(err);
+      process.exit(2);
+    }
+    console.log(
+      stats.toString({
+        colors: true,
+        modules: false,
+        children: false,
+      })
+    );
+
+    console.log('webpack build succeeded, begin to test.');
+
+    mocha.addFile(path.join(__dirname, './html-test.js'));
+    mocha.addFile(path.join(__dirname, './js-css-test.js'));
+
+    mocha.run();
+  });
+});
+```
+
+需要注意的是路径是否正确，html,js,css 的测试用例就不贴代码了，感兴趣的可以到我的仓库代码中查看，最终运行成功的结果如下：
+
+![冒烟测试结果](https://ypyun.ywhoo.cn/assets/20210523132416.png)
+
+### 单元测试和测试覆盖率
+
+单纯的测试框架：Mocha/AVA，需要安装额外的断言库：chai/should.js/expect/better-assert
+集成框架，开箱即用：Jasmine/Jest（React）
+
+使用 Mocha + Chai，主要的测试 api:
+
+- describe 描述需要测试的文件
+- it 一个文件中多个测试用例
+- expect 断言
+
+执行测试命令：
+
+```shell
+mocha add.test.js
+```
+
+#### 单元测试
+
+编写单元测试用例：
+
+> mocha 默认会查找 test/index.js。
+
+```javascript title="test/index.js"
+describe('webpack config test.', () => {
+  require('./unit/webpack-base.test');
+});
+```
+
+```javascript title="test/unit/webpack-base.test.js"
+const assert = require('assert');
+
+describe('webpack.common.js test case.', () => {
+  const baseConfig = require('../../config/webpack.common');
+
+  it('entry', () => {
+    // 测试入口的文件路径是否正确
+    assert.strictEqual(
+      baseConfig.entry.main,
+      '/Users/yewei/Project/source-code-realize/play-webpack/lib/yw-build-webpack/src/index.jsx'
+    );
+  });
+});
+```
+
+测试通过后如下：
+
+![单元测试结果](https://ypyun.ywhoo.cn/assets/20210523134659.png)
+
+#### 测试覆盖率
+
+安装 `istanbul`。
+
+安装好之后修改 `test:unit` 命令：
+
+```json
+{
+  "scripts": {
+    "test:unit": "istanbul cover mocha"
+  }
+}
+```
+
+> 注意：测试的目标代码中不能有 es6+ 语法的代码，否则无法收集到测试覆盖率数据。
+
+执行 `yarn test:unit` 的结果如下，并且会在根目录下生成 coverage 的目录，用来存放代码覆盖率的结果：
+
+![测试覆盖率](https://ypyun.ywhoo.cn/assets/20210523135726.png)
+
+### 持续集成和 Travis CI
+
+持续集成的作用：
+
+- 快速发现错误
+- 防止分支大幅偏离主干
+
+核心思路：代码集成到主干前，必须通过自动化测试。只要有一个错误，就不能集成。
+
+Github 最流行的 CI:
+
+![CI](https://ypyun.ywhoo.cn/assets/20210523145303.png)
+
+接入 Travis CI:
+
+1. [Travis](https://travis-ci.org/) 点击登录
+2. 激活需要持续集成的项目
+3. 项目根目录下新增 .travis.yml
+
+在 github 创建件新项目，然后执行以下步骤将 `yw-build-webpack` 下的代码上传到该仓库：
+
+```shell
+# 进入yw-build-webpack，初始化 git
+git init
+git add .
+git commit -m "xxx"
+# 将远程仓库添加进来
+git remote add origin https://github.com/weiTimes/yw-build-webpack.git
+# 推送代码
+git push -u origin master
+```
+
+添加 `.travis.yml`:
+
+```yml
+language: node_js # 语言
+
+sudo: false
+
+node_js:
+  - 12.16.1
+
+cache: # 保存缓存
+  - npm
+  - yarn
+
+before_install: # 安装依赖
+  - npm install -g yarn
+  - yarn
+
+scripts: # 执行测试
+  - yarn test
+```
+
+当代码提价时，会走动触发构建任务。
+
+### 发布构建包到 npm 社区
+
+#### 发布 npm
+
+添加用户：npm adduser
+
+升级版本
+
+- 升级补丁版本号：npm version patch
+- 升级小版本号：npm version minor
+- 升级大版本号：npm version major
+
+发布版本：npm publish
+
+进入要发布的项目根目录，然后登陆 npm 并执行发布操作：
+
+```shell
+npm login
+npm publish
+```
+
+当要发布补丁时，执行以下步骤：
+
+```shell
+git add .
+git commit -m "doc: udpate reamde"
+npm version patch
+git push -u origin master
+npm publish
+```
+
+### Git commit 规范和 changelog 生成
+
+良好的 git commit 规范优势：
+
+- 加快 code review 的流程
+- 根据 git commit 的元数据生成 changelog
+- 方便后续维护者维护
+
+angular git commit 规范：
+
+![提交格式](https://ypyun.ywhoo.cn/assets/20210523162414.png)
+
+![commit 规范](https://ypyun.ywhoo.cn/assets/20210523162218.png)
+
+#### 本地开发阶段增加 precommit 钩子
+
+添加依赖：
+
+```shell
+yarn add conventional-changelog-cli @commitlint/{config-conventional,cli}
+```
+
+[参考 Git 提交规范](https://blog.ywhoo.cn/docs/styleguide/commit)
+
+#### changlog 生成
+
+按照规范 commit 之后，可以很方便地生成 changelog
+
+![changelog](https://ypyun.ywhoo.cn/assets/20210523162610.png)
+
+### 语义化版本
+
+开源项目版本信息安利
+
+- 通常由三位组成：x.y.z
+- 版本严格递增：16.2.0 -> 16.3.0 -> 16.3.1
+- 发布重要版本时，可以发布 alpha（内部）, beta（外部小范围）, rc（公测） 等先行版本 16.2.0-rc.123
+
+遵循 semver 规范：
+
+- 避免出现循环依赖
+- 减少依赖冲突
+
+规范格式：
+
+- 主版本号：做了不兼容的 api 修改
+- 次版本号：新增向下兼容的功能
+- 修订版本号：向下兼容的问题修正

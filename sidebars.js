@@ -49,10 +49,10 @@ module.exports = {
     nodejs: ['nodejs/koa2-oldisland', 'nodejs/npm-module-install'],
     服务器: ['server/jwt', 'server/mysql-uninstall', 'server/http-auth'],
     工程化: [
+      'engineering/webpack-play',
       'engineering/docker-begin',
       'engineering/git-basic',
       'engineering/front-deep-in',
-      'engineering/webpack',
     ],
     性能优化: [
       'optimize/optimize-basic',
