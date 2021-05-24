@@ -3,7 +3,7 @@ id: webpack-play
 title: 玩转webpack
 ---
 
-> 源码地址：[玩转 webpack](https://github.com/weiTimes/source-code-realize/tree/master/play-webpack)
+> 我将源码放在我的仓库中，可以对照着文档阅读。源码地址：[玩转 webpack](https://github.com/weiTimes/source-code-realize/tree/master/play-webpack)
 
 ## 初识 webpack
 
@@ -1793,3 +1793,260 @@ yarn add conventional-changelog-cli @commitlint/{config-conventional,cli}
 - 修订版本号：向下兼容的问题修正
 
 ## webpack 构建速度和体积优化策略
+
+### 初级分析：使用 stats
+
+> 在 webpack5 中可以得到构建各个阶段的处理过程、耗费时间以及缓存使用的情况。
+
+```javascript title="webpack.prod.js"
+module.exports = {
+  stats: 'verbose', // 输出所有信息 normal: 标准信息; errors-only: 只有错误的时候才输出信息
+};
+```
+
+在根目录下生成 stats.json，包含了构建的信息。
+
+```json title="package.json"
+{
+  "scripts": {
+    "analyze:stats": "webpack --config config/webpack.prod.js --json stats.json"
+  }
+}
+```
+
+### 速度分析：使用 `speed-measure-webpack-plugin`
+
+> 这个插件在 webpack5 中已经用不到了，可以使用内置的 stats 替代。
+
+作用：
+
+- 分析整个打包总耗时
+- 每个插件和 loader 的耗时情况
+
+```shell
+yarn add speed-measure-webpack-plugin -D
+```
+
+```javascript
+const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
+
+const smp = new SpeedMeasurePlugin();
+
+const webpackConfig = smp.wrap({
+  plugins: [new MyPlugin(), new MyOtherPlugin()],
+});
+```
+
+### 体积分析：webpack-bundle-analyzer
+
+分析：
+
+- 依赖的大小
+- 业务组件代码的大小
+
+```shell
+yarn add webpack-bundle-analyzer
+```
+
+```javascript
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+
+module.exports = {
+  plugins: [new BundleAnalyzerPlugin()],
+};
+```
+
+执行完成后会自动打开 `http://127.0.0.1:8888/`，如下图所示:
+
+![分析](https://ypyun.ywhoo.cn/assets/20210524211355.png)
+
+### 使用更高版本的 webpack 和 nodejs
+
+webpack4 和 nodejs 高版本较之前所做的优化：
+
+- V8 带来的优化：for of 替代 forEach; Map/Set 替代 Object; includes 替代 indexOf。
+- md5 → md4 算法。
+- 使用字符串方法替代正则表达式。
+
+webpack5 的主要优化及特性：
+
+- 持久化缓存。可以设置基于内存的临时缓存和基于文件系统的持久化缓存。
+  - 一旦开启，会忽略其它插件的缓存设置。
+- Tree Shaking
+  - 增加了对嵌套模块的导出跟踪功能，能够找到那些嵌套在最内层而未被使用的模块属性。
+  - 增加了对 cjs 模块代码的静态分析功能。
+- Webpack 5 构建输出的日志要丰富完整得多，通过这些日志能够很好地反映构建各阶段的处理过程、耗费时间，以及缓存使用的情况。
+- 新增了改变微前端构建运行流程的 Module Federation。
+- 对产物代码进行优化处理 Runtime Modules。
+- 优化了处理模块的工作队列。
+- 在生命周期中增加了 stage 选项。
+
+### 多进程/多实例构建
+
+可选方案：
+
+- thread-loader
+- parallel-webpack
+- 一些插件内置的 parallel 参数（如 TerserWebpackPlugin, CssMinimizerWebpackPlugin, HtmlMinimizerWebpackPlugin）
+- HappyPack（作者已经不维护）
+
+#### thread-loader
+
+原理：每次 webpack 解析一个模块，thread-loader 会将它及它的依赖分配给 worker 线程中。
+
+```javascript
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.jsx?$/,
+        use: [
+          {
+            loader: 'thread-loader',
+            options: {
+              workder: 3,
+            },
+          },
+          'babel-loader',
+          'eslint-loader',
+        ],
+      },
+    ],
+  },
+};
+```
+
+### 并行压缩
+
+可以配置并行压缩的插件：
+
+- terser-webpack-plugin
+- css-minimizer-webpack-plugin
+- html-minimizer-webpack-plugin
+
+```javascript
+module.exports = {
+  optimization: {
+    minimize: true,
+    minimizer: [
+      new CssMinimizerPlugin(),
+      new TerserPlugin({ parallel: 2 }),
+      '...',
+    ],
+  },
+};
+```
+
+### 进一步分包：预编译资源模块（DLL）
+
+回顾之前分包的思路：
+
+使用 SplitChunkPlugin 将 react, react-dom 等基础库分离成单独的 chunk。
+
+缺点是每次打包时仍然会对基础包进行解析编译，更好的方式是进行预编译资源模块，通过 DLLPlugin, DllReferencePlugin 实现。
+
+#### 预编译资源模块
+
+思路：将 react, react-dom, redux, react-redux 基础包和业务基础包打包成一个文件，可以提供给其它项目使用。
+
+方法：使用 DLLPlugin 进行分包，DllReferencePlugin 对 manifest.json 引用。
+
+首先定义一个 `config/webpack.dll.js`, 用于将基础库进行分离：
+
+```javascript
+const path = require('path');
+const webpack = require('webpack');
+
+module.exports = {
+  mode: 'production',
+  entry: {
+    library: ['react', 'react-dom'],
+  },
+  output: {
+    filename: '[name]_[chunkhash].dll.js',
+    path: path.resolve(__dirname, '../build/library'),
+    library: '[name]',
+  },
+  plugins: [
+    new webpack.DllPlugin({
+      context: __dirname,
+      name: '[name]_[hash]',
+      path: path.join(__dirname, '../build/library/[name].json'),
+    }),
+  ],
+};
+```
+
+然后在 `webpack.common.js` 中将预编译资源模块引入：
+
+```javascript
+module.exports = {
+  plugins: [
+    new webpack.DllReferencePlugin({
+      context: __dirname,
+      manifest: require('../build/library/library.json'),
+      scope: 'xyz',
+      sourceType: 'commonjs2',
+    }),
+  ],
+};
+```
+
+### 充分利用缓存提升二次构建速度
+
+目的：提升二次构建速度。
+
+缓存思路：
+
+- webpack5 内置的基于内存的临时缓存和基于文件系统的持久化缓存。
+- cache-loader。
+- terser-webpack-plugin 开启缓存。
+
+基于文件系统的持久化缓存，在 node_modules 下会生成 .cache 目录：
+
+```javascript title="webpack.common.js"
+module.exports = {
+  cache: {
+    type: 'filesystem', // memory 基于内存的临时缓存
+    // cacheDirectory: path.resolve(__dirname, '.temp_cache'),
+  },
+};
+```
+
+### 缩小构建目标
+
+目的：减少需要解析的模块。
+
+- babel-loader 不解析 node_modules
+
+减少文件搜索范围：
+
+- resolve.modules 减少模块搜索层级，指定当前 node_modules。
+- resovle.mainFields 指定入口文件。
+- resolve.extension 对于没有指定后缀的引用，指定解析的文件后缀算法。
+- 合理使用 alias，引用三方依赖的生成版本。
+
+```javascript
+module.exports = {
+  resolve: {
+    alias: {
+      react: path.resolve(__dirname, './node_modules/react/dist/react.min.js'),
+    },
+    modules: [path.resolve(__dirname, './node_modules')],
+    extensions: ['.js', '.jsx', '.json'],
+    mainFields: ['main'],
+  },
+};
+```
+
+### Tree Shaking 擦除无用的 css
+
+前面已经介绍了使用 Tree Shaking 擦除无用的 js，这在 webpack5 中已经内置了，这一小节介绍如何擦除无用的 css。
+
+- PurifyCSS: 遍历代码，识别已经用到的 css class。
+- uncss: html 需要通过 jsdom 加载，所有的样式通过 PostCSS 解析，通过 document.querySelector 识别 html 文件中不存在的选择器。
+
+在 webpack 中使用 PurifyCSS:
+
+- 使用 purgecss-webpack-plugin
+- 和 mini-css-extract-plugin 配合使用

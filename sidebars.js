@@ -41,6 +41,7 @@ module.exports = {
         ],
       },
     ],
+    网络: ['network/perspective-network'],
     架构设计: ['structure/react-ssr'],
     Typescript: ['typescript/base'],
     CSS: ['css/tricks'],
