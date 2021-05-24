@@ -34,7 +34,6 @@ module.exports = {
         type: 'category',
         label: 'React',
         items: [
-          'framework/react-roadmap',
           'framework/react-interview',
           'framework/react-vue',
           'framework/react-mini',
@@ -50,6 +49,7 @@ module.exports = {
     服务器: ['server/jwt', 'server/mysql-uninstall', 'server/http-auth'],
     工程化: [
       'engineering/webpack-play',
+      'engineering/performance-monitoring',
       'engineering/docker-begin',
       'engineering/git-basic',
       'engineering/front-deep-in',

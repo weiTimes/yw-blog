@@ -1,6 +1,6 @@
 ---
 id: front-deep-in
-title: 前端工程化由浅入深
+title: 前端工程化精讲
 ---
 
 ## 开发效率
@@ -73,3 +73,5 @@ webpack 的几种相关配置：
 3. css-loader 将 style.css 转换为 Content 模块并打入 chunk 中。
 4. style-loader 使用 API 模块将 Content 模块在运行时注入 style 标签中。
 5. 处理完所有依赖的模块后，输出 main.js 的产物。
+
+##
