@@ -2050,3 +2050,68 @@ module.exports = {
 
 - 使用 purgecss-webpack-plugin
 - 和 mini-css-extract-plugin 配合使用
+
+```javascript
+const PurgeCSSPlugin = require('purgecss-webpack-plugin');
+const glob = require('glob');
+
+const PATHS = { src: path.resolve('../src') };
+
+module.exports = {
+  plugins: [
+    new PurgeCSSPlugin({
+      paths: glob.sync(`${PATHS.src}/**/*`, { nodir: true }),
+    }),
+  ],
+};
+```
+
+### 图片压缩
+
+```shell
+yarn add image-minimizer-webpack-plugin
+```
+
+无损压缩推荐使用下面依赖：
+
+```shell
+yarn add imagemin-gifsicle imagemin-jpegtran imagemin-optipng imagemin-svgo
+```
+
+```javascript
+const ImageMinimizerPlugin = require('image-minimizer-webpack-plugin');
+
+module.exports = {
+  plugins: [
+    new ImageMinimizerPlugin({
+      minimizerOptions: {
+        plugins: [['jpegtran', { progressive: true }]],
+      },
+    }),
+  ],
+};
+```
+
+### 使用动态 Polyfill 服务
+
+用于体积优化。
+
+polyfill-service: 只给用户返回需要的 polyfill，国内部分浏览器可能无法识别 User Agent，可以采用优雅降级的方案。
+
+polyfill-service 原理：识别 User Agent，下发不同的 polyfill，做到按需加载需要的 polyfill。
+
+![polyfill](https://ypyun.ywhoo.cn/assets/20210525213102.png)
+
+[polyfill.io](https://polyfill.io/v3/polyfill.min.js)
+
+### 体积优化策略总结
+
+- Scope Hoisting
+- Tree Shaking
+- 公共资源分离
+  - SplitChunks
+  - 预编译资源模块
+- 图片压缩
+- 动态 Polyfill
+
+## 通过源代码掌握 webpack 打包原理

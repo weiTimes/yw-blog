@@ -5,7 +5,7 @@ title: 透视 HTTP 协议
 
 ## 破冰篇
 
-### 自动动手搭建 HTTP 实验环境
+### 动手搭建 HTTP 实验环境
 
 > Linux/Mac 实验环境搭建
 
