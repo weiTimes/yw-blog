@@ -5,6 +5,10 @@ title: 玩转webpack
 
 > 我将源码放在我的仓库中，可以对照着文档阅读。源码地址：[玩转 webpack](https://github.com/weiTimes/source-code-realize/tree/master/play-webpack)
 
+## 前言
+
+本篇长文是学习程柳峰老师开设的《玩转 webpack》专栏的实践笔记，和专栏不一样的是，我的实战源码是基于 webpack5，它的配置和源码实现上与 webpack4 有许多不同的地方，感兴趣的同学可以结合我在上面放出的源码仓库进行学习，相信会有不小的收获。
+
 ## 初识 webpack
 
 配置文件：`webpack.config.js`
@@ -2115,3 +2119,80 @@ polyfill-service 原理：识别 User Agent，下发不同的 polyfill，做到�
 - 动态 Polyfill
 
 ## 通过源代码掌握 webpack 打包原理
+
+### webpack 启动过程分析
+
+开始：从 webpack 命令行说起。
+
+- 通过 npm scripts 运行 webpack
+  - 开发环境： npm run dev
+  - 生产环境： npm run build
+- 通过 webpack 直接运行
+  - webpack entry.js bundle.js
+
+这个过程发生了什么？
+
+执行上述命令之后，npm 会让命令行进入 `node_modules/.bin` 目录下查找 `webpack.js`，如果存在就执行，不存在就抛出错误。
+
+`.bin` 目录下的文件实际上是软链接，`webpack.js` 真正指向的文件是 `node_modules/webpack/bin/webpack.js`。
+
+#### 分析 webpack 的入口文件：webpack.js
+
+认识几个关键函数：
+
+- runCommand -> 运行命令
+- isInstalled -> 判断某个包是否安装
+- runCli -> 执行 webpack-cli
+
+执行流程：
+
+1. 判断 webpack-cli 是否存在。
+2. 不存在则抛出异常，存在则直接到第 6 步。
+3. 判断当前使用的包管理器是 yarn/npm/pnpm 中的哪一种。
+4. 使用包管理器自动安装 webpack-cil（runCommand -> `yarn webpack-cli -D`）
+5. 安装成功后执行 runCli
+6. 执行 runCli（执行 `webpack-cli/bin/cli.js`）
+
+总结：webpack 最终会找到 webpack-cli 这个包，并且执行 webpack-cli。
+
+### webpack-cli 源码阅读
+
+webpack-cli 做的事情：
+
+- 引入 [`Commander.js`](https://github.com/tj/commander.js/blob/HEAD/Readme_zh-CN.md)，对命令行进行定制。
+- 分析命令行参数，对各个参数进行转换，组成编译配置项。
+- 引用 webpack，根据生成的配置项进行编译和构建。
+
+#### 命令行工具包 `Commander.js` 介绍
+
+> 完成的 `nodejs` 命令行解决方案。
+
+- 提供命令和分组参数。
+- 动态生成 help 帮助信息。
+
+#### 具体的执行流程：
+
+1. 接着上面一小节的执行 webpack-cli，也就是执行 `node_modules/webpack-cli/bin/cli.js`。
+2. 检查是否有 `webpack`，有的话执行 `runCli`，它主要做的是实例化 `node_modules/webpack-cli/webpack-cli.js`，然后调用它的 `run` 方法。
+3. 使用 `Commander.js` 定制命令行参数。
+4. 解析命令行的参数，如果是内置参数，则调用 `createCompiler`，主要做的事是想将得到的参数传递给 `webpack`，生成实例化对象 `compiler`。
+
+总结：webpack-cli 对命令行参数进行转换，最终生成配置项参数 options，将 options 传递给 webpack 对象，执行构建流程（最后会判断是否有监听参数，如果有，就执行监听的动作）。
+
+#### Tapable 插件架构与 Hooks 设计
+
+webpack 的本质：webpack 可以将其理解成是一种基于事件流（发布订阅模式）的编程范例，一系列的插件运行。
+
+Compiler 和 Compilation 都是继承 Tapable，那么 Tapable 是什么呢？
+
+Tapable 是一个类似于 nodejs 的 EventEmitter 的库，主要是控制钩子函数的发布与订阅，控制着 webpack 的插件系统。
+
+- Tapable 暴露了很多 Hook 类，为插件提供挂载的钩子。
+
+Tapable hooks 类型：
+
+![hooks](https://ypyun.ywhoo.cn/assets/20210526235407.png)
+
+Tapable 提供了同步和异步绑定钩子的方法，并且都有绑定事件和执行事件对应的方法。
+
+![tapable use](https://ypyun.ywhoo.cn/assets/20210526235622.png)
