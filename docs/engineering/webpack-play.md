@@ -2379,3 +2379,128 @@ for (const plugin of options.plugins) {
 
 compiler.run(); // 触发事件
 ```
+
+### webpack 流程篇：准备阶段
+
+> webpack 的打包流程可以分为三个阶段：
+>
+> 1. 准备：初始化参数，为对应的参数注入插件
+> 2. 模块编译和打包
+> 3. 模块优化、代码生成和输出到磁盘。
+
+webpack 的编译按照下面钩子的调用顺序进行：
+
+![编译流程图](https://ypyun.ywhoo.cn/assets/20210530165755.png)
+
+1. entry-option: 初始化 option。
+2. run: 开始编译。
+3. make: 从 entry 开始递归地分析依赖，对每个依赖模块进行 build。
+4. before-resolve: 对模块位置进行解析。
+5. build-module: 开始构建某个模块。
+6. normal-module-loader: 将 loader 加载完成的 module 进行编译，生成 AST 树。
+7. program: 遍历 AST，当遇到 require 等一些调用表达式，收集依赖。
+8. seal: 所有依赖 build 完成，开始优化。
+9. emit: 输出到 dist 目录。
+
+#### entry-option
+
+首先第一步，在目录下查询 `entryOption` 字符串的位置：
+
+```shell
+grep "\.entryOption\." -rn ./node_modules/webpack
+```
+
+得到如下结果：
+
+![entryOption](https://ypyun.ywhoo.cn/assets/20210530174533.png)
+
+可以看到，在 `EntryOptionPlugin` 和 `DllPlugin` 中有绑定该 hook，在 `WebpackOptionsApply` 中触发该 hook。
+
+##### WebpackOptionsApply
+
+1. 将所有的配置 options 参数转换成 webpack 内部插件。
+
+如：
+
+- options.externals 对应 ExternalsPlugin。
+- options.output.clean 对应 CleanPlugin。
+- options.experiments.syncWebAssembly 对应 WebAssemblyModulesPlugin。
+
+2. 绑定 entryOption hook 并触发它。
+
+最后准备阶段以一张较为完整的流程图结束：
+
+![准备阶段](https://ypyun.ywhoo.cn/assets/20210530213711.png)
+
+### webpack 流程篇：模块构建和 chunk 生成阶段
+
+#### 相关的 hook
+
+流程相关：
+
+- (before-)run
+- (before-/after-)compile
+- make
+- (after-)emit
+- done
+
+监听相关：
+
+- watch-run
+- watch-close
+
+#### Compilation
+
+Compiler 调用 Compilation 生命周期方法：
+
+- addEntry -> addModuleChain
+- finish（上报模块错误）
+- seal
+
+#### ModuleFactory
+
+Compiler 会创建两个工厂函数，分别是 NormalModuleFactory 和 ContextModuleFactory，均继承 ModuleFactory。
+
+- NormalModuleFactory: 普通模块名导入。
+- ContextModuleFactory: 以路径形式导入的模块。
+
+![Module](https://ypyun.ywhoo.cn/assets/20210530214635.png)
+
+#### NormalModule
+
+Build-构建阶段:
+
+- 使用 loader-runner 运行 loaders
+  解析模块生成 js 代码。
+- 通过 Parser 解析（内部使用 acron）
+  解析依赖，
+- ParserPugins 添加依赖
+  所有依赖解析完成后，make 阶段就结束了。
+
+#### 具体构建流程
+
+- compiler.compile: hooks.compile -> hooks.make（开始构建） -> compilation.addEntry（添加入口文件）。
+
+查看绑定和触发 hooks.make 的地方：
+
+![hooks.make](https://ypyun.ywhoo.cn/assets/20210530221421.png)
+
+- 模块构建完成后，触发 hook.finishMake -> compilation.finish -> compilation.seal -> hooks.afterCompile，最终得到经过 loaders（loader-runner） 解析生成的代码。
+
+- 以 NormalModule 的构建为例，说说它的过程：
+
+1. 构建，通过 loader 解析：build -> doBuild -> runLoaders。
+2. 分析及添加依赖：parser.parse（将 loader 编译过得代码使用 acron 解析并添加依赖）。
+3. 将最终得到的结果存储到 compilation.modules。
+4. hook.finishMake 完成构建。
+
+#### chunk 生成算法
+
+1. webpack 先将 entry 中对应的 module 都生成一个新的 chunk。
+2. 遍历 module 的依赖列表，将依赖的 module 也加入到 chunk 中。
+3. 如果一个依赖 module 是动态引入的模块，那么就会根据这个 module 创建一个新的 chunk，继续遍历依赖。
+4. 重复上面的过程，知道生成所有的 chunk。
+
+### webpack 流程篇：文件生成
+
+完成构建后，执行 hooks.seal、hooks.optimize 对构建结果进行优化，优化完成后出触发 hooks.emit，将构建结果输出到磁盘上。
