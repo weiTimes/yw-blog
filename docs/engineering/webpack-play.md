@@ -2179,7 +2179,7 @@ webpack-cli 做的事情：
 
 总结：webpack-cli 对命令行参数进行转换，最终生成配置项参数 options，将 options 传递给 webpack 对象，执行构建流程（最后会判断是否有监听参数，如果有，就执行监听的动作）。
 
-#### Tapable 插件架构与 Hooks 设计
+### Tapable 插件架构与 Hooks 设计
 
 webpack 的本质：webpack 可以将其理解成是一种基于事件流（发布订阅模式）的编程范例，一系列的插件运行。
 
@@ -2196,3 +2196,186 @@ Tapable hooks 类型：
 Tapable 提供了同步和异步绑定钩子的方法，并且都有绑定事件和执行事件对应的方法。
 
 ![tapable use](https://ypyun.ywhoo.cn/assets/20210526235622.png)
+
+实现一个 `Car` 类，其中有个 hooks 对象，包含了加速、刹车、计算路径等 hook，对其分别注册事件和触发事件：
+
+```javascript
+console.time('cost');
+
+class Car {
+  constructor() {
+    this.hooks = {
+      acclerate: new SyncHook(['newspped']), // 加速
+      brake: new SyncHook(), // 刹车
+      calculateRoutes: new AsyncSeriesHook(['source', 'target', 'routes']), // 计算路径
+    };
+  }
+}
+
+const myCar = new Car();
+
+// 绑定同步钩子
+myCar.hooks.brake.tap('WarningLmapPlugin', () => {
+  console.log('WarningLmapPlugin');
+});
+
+// 绑定同步钩子并传参
+myCar.hooks.acclerate.tap('LoggerPlugin', (newSpeed) => {
+  console.log(`accelerating spped to ${newSpeed}`);
+});
+
+// 绑定一个异步的 promise
+myCar.hooks.calculateRoutes.tapPromise(
+  'calculateRoutes tabPromise',
+  (params) => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        console.log(`tapPromise to ${params}`);
+        resolve();
+      }, 1000);
+    });
+  }
+);
+
+// 触发同步钩子
+myCar.hooks.brake.call();
+// 触发同步钩子并传入参数
+myCar.hooks.acclerate.call(120);
+// 触发异步钩子
+myCar.hooks.calculateRoutes
+  .promise(['Async', 'hook', 'demo'])
+  .then(() => {
+    console.timeEnd('cost');
+  })
+  .catch((err) => {
+    console.error(err);
+    console.timeEnd('cost');
+  });
+```
+
+### Tapable 是如何和 webpack 进行关联起来的
+
+上面说到 `webpack-cli.js` 中执行 `createCompiler` 的时候，将转换后得到的 `options` 传递给 webpack 方法然后生成 `compiler` 对象，接下来说说 `webpack.js` 中做的事情，我将 `createCompiler` 的源码贴出，便于理解：
+
+```javascript
+const createCompiler = (rawOptions) => {
+  const options = getNormalizedWebpackOptions(rawOptions);
+  applyWebpackOptionsBaseDefaults(options);
+  const compiler = new Compiler(options.context); // 实例化 compiler
+  compiler.options = options;
+  new NodeEnvironmentPlugin({
+    infrastructureLogging: options.infrastructureLogging,
+  }).apply(compiler);
+  if (Array.isArray(options.plugins)) {
+    // 遍历并调用插件
+    for (const plugin of options.plugins) {
+      if (typeof plugin === 'function') {
+        plugin.call(compiler, compiler);
+      } else {
+        plugin.apply(compiler);
+      }
+    }
+  }
+  applyWebpackOptionsDefaults(options);
+  // 触发监听的 hooks
+  compiler.hooks.environment.call();
+  compiler.hooks.afterEnvironment.call();
+  new WebpackOptionsApply().process(options, compiler); // 注入内部插件
+  compiler.hooks.initialize.call();
+  return compiler; // 将实例返回
+};
+```
+
+通过上述代码可以得到两个关于插件的结论：
+
+- 插件就是监听 compiler 对象上的 hooks。
+- 执行插件需要调用插件的 apply 方法，并将 compiler 对象作为参数传入。
+
+`webpack.js`:
+
+- webpack 中也有 createCompiler 方法，它会先实例化 `Compiler` 对象，生成 compiler 实例。
+- Compiler 中的核心在于挂载了许多继承自 Tapable 的 hooks，其它地方可以使用 compiler 实例注册和触发事件，在 webpack 构建的不同阶段，会触发不同的 hook。
+- `options.plugins` 即配置的一系列插件，在 createCompiler 中，生成 compiler 实例后，如果 `options.plugins` 是数组类型，则会遍历调用它，并传入 compiler，形如 `plugin.apply(compiler)`，内部绑定 compiler 上的一些 hooks 事件。
+
+简易模拟 Compiler 和插件的实现：
+
+```javascript title="compiler.js"
+// Compiler 对象，挂载了一些 hook
+const { SyncHook, AsyncSeriesHook } = require('tapable');
+
+module.exports = class Compiler {
+  constructor() {
+    this.hooks = {
+      acclerate: new SyncHook(['newspped']),
+      brake: new SyncHook(),
+      calculateRoutes: new AsyncSeriesHook(['source', 'target', 'routesList']),
+    };
+  }
+
+  run() {
+    this.acclerate(100);
+    this.brake();
+    this.calculateRoutes('Async', 'hook', 'demo');
+  }
+
+  acclerate(speed) {
+    this.hooks.acclerate.call(speed);
+  }
+
+  brake() {
+    this.hooks.brake.call();
+  }
+
+  calculateRoutes(...params) {
+    this.hooks.calculateRoutes.promise(...params).then(
+      () => {},
+      (err) => {
+        console.log(err);
+      }
+    );
+  }
+};
+```
+
+webpack 插件，根据传入的 compiler 对象，选择性监听了一些 hook:
+
+```javascript title="my-plugin.js"
+const Compiler = require('./compiler');
+
+class MyPlugin {
+  apply(compiler) {
+    // 绑定事件
+    compiler.hooks.acclerate.tap('打印速度', (newSpeed) =>
+      console.log(`speed acclerating to ${newSpeed}`)
+    );
+    compiler.hooks.brake.tap('刹车警告', () => console.log('正在刹车'));
+    compiler.hooks.calculateRoutes.tapPromise(
+      '计算路径',
+      (source, target, routesList) =>
+        new Promise((resolve, reject) => {
+          setTimeout(() => {
+            console.log(`计算路径: ${source} ${target} ${routesList}`);
+            resolve();
+          }, 1000);
+        })
+    );
+  }
+}
+
+// 模拟插件执行
+const compiler = new Compiler();
+const myPlugin = new MyPlugin();
+
+// 模拟 webpack.config.js 的 plugins 配置
+const options = { plugins: [myPlugin] };
+
+for (const plugin of options.plugins) {
+  if (typeof plugin === 'function') {
+    plugin.call(compiler, compiler);
+  } else {
+    plugin.apply(compiler); // 绑定事件
+  }
+}
+
+compiler.run(); // 触发事件
+```
