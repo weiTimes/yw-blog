@@ -2619,7 +2619,7 @@ module.exports = {
 - Compose
 
 ```javascript
-compose =
+const compose =
   (f, g) =>
   (...args) =>
     f(g(...args));
@@ -2627,7 +2627,9 @@ compose =
 
 #### 验证 loader 顺序的执行
 
-[源码地址]()
+[源码地址](https://github.com/weiTimes/source-code-realize/tree/master/play-webpack/source/mini-loader)
+
+执行 `yarn build` 能查看 loader 日志打印的顺序。
 
 ### 使用 loader-runner 高效进行 loader 的调试
 
@@ -2679,3 +2681,432 @@ runLoaders(
 执行 `node run-loader.js`，以下是输出结果：
 
 ![run-loader](https://ypyun.ywhoo.cn/assets/20210603150345.png)
+
+### 更复杂的 loader 的开发场景
+
+#### loader 的参数获取
+
+通过 `loader-utils` 的 getOptions 方法获取。
+
+修改 `run-loader.js`，改成可以传递参数的形式：
+
+```javascript
+runLoaders(
+  {
+    resource: path.join(__dirname, './src/info.txt'),
+    loaders: [
+      {
+        loader: path.join(__dirname, './loaders/raw-loader.js'),
+        options: { name: 'ywhoo' }, // 传递了 name 参数
+      },
+    ],
+    context: { minimize: true },
+    readResource: fs.readFile.bind(fs),
+  },
+  (err, result) => {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log(result);
+    }
+  }
+);
+```
+
+在 `raw-loader.js` 中使用该参数：
+
+```javascript
+const loaderUtils = require('loader-utils');
+
+module.exports = function rawLoader(source) {
+  const { name } = loaderUtils.getOptions(this); // 引入参数
+
+  console.log(name, 'name');
+
+  const str = JSON.stringify(source)
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+
+  return `export default ${str}`;
+};
+```
+
+#### loader 的异常处理
+
+同步：
+
+- throw
+- this.callback
+  - 返回处理结果
+  - 抛出异常
+  - 回传更多的值
+
+```typescript
+// throw
+throw new Error('error');
+
+// this.callback
+this.callback(err: Error | null, content: string | Buffer, sourceMap?: SourceMap, meta?: any);
+```
+
+#### 异步处理
+
+在开发 loader 过程中，可能需要处理异步，如异步读取文件，等读取完成后将内容返回。
+
+可以通过 `this.async()` 实现，修改 `raw-loader` 中的例子，增加异步文件的读取：
+
+```javascript
+// ...
+module.exports = function rawLoader(source) {
+  const callback = this.async();
+
+  fs.readFile(
+    path.join(__dirname, '../src/async.txt'),
+    'utf-8',
+    (err, data) => {
+      callback(null, data);
+    }
+  );
+};
+```
+
+![异步](https://ypyun.ywhoo.cn/assets/20210603153957.png)
+
+#### 在 loader 中使用缓存
+
+- webpack 中默认开启 loader 缓存
+  - 使用 `this.cacheable(false)` 关闭默认缓存
+- 缓存条件：loader 的结果在相同的输入下有确定的输出
+  - 有依赖的 loader 无法使用缓存
+
+关掉缓存：
+
+```javascript title="raw-loader.js"
+module.exports = function () {
+  this.cacheable(false);
+};
+```
+
+![关闭缓存](https://ypyun.ywhoo.cn/assets/20210603154440.png)
+
+#### 在 loader 中输出文件到磁盘中
+
+使用 `this.emitFile` 进行文件写入。
+
+在 `loader-a.js` 中输出文件，最终会在 `dist` 下生成 `demo.txt`：
+
+```javascript
+module.exports = function (source) {
+  console.log('loader a is running');
+
+  this.emitFile('demo.txt', '在 loader 中输出文件。');
+
+  return source;
+};
+```
+
+或使用 `loader-utils`，在本例中，会在 `dist` 下生成 `index.js`：
+
+```javascript
+const loaderUtils = require('loader-utils');
+
+module.exports = function (source) {
+  console.log('loader a is running');
+
+  // 匹配出符合规则的文件名称，如这里会匹配到 index.js
+  const filename = loaderUtils.interpolateName(this, '[name].[ext]', source);
+
+  this.emitFile(filename, source);
+
+  return source;
+};
+```
+
+#### 实战开发一个自动合成雪碧图的 loader
+
+> 雪碧图的应用可以减少 http 的请求次数，有效提升页面加载的速度。
+
+实现将多张图片合成一张，支持如下效果：
+
+![雪碧图](https://ypyun.ywhoo.cn/assets/20210603161600.png)
+
+#### 如何将两张图片合成一张图片
+
+使用 `spritesmith`。
+
+实现 `sprite-loader`:
+
+```javascript
+const path = require('path');
+const Spritesmith = require('spritesmith');
+const fs = require('fs');
+
+module.exports = function (source) {
+  const callback = this.async();
+  const regex = /url\((\S*)\?__sprite\S*\)/g;
+
+  let imgs = source.match(regex); // [ "url('./images/girl.jpg?__sprite", "url('./images/glasses.jpg?__sprite" ]
+
+  imgs = imgs.map((img) => {
+    const imgPath = img.match(/\/(images\/\S*)\?/)[1];
+
+    return path.join(__dirname, '../src', imgPath);
+  });
+
+  Spritesmith.run({ src: imgs }, function handleResult(err, result) {
+    // 将生成的图片写入 dist/sprites.jpg
+    // 在 webpack 中，应该使用 emitFile 来写入文件
+    fs.writeFileSync(
+      path.join(process.cwd(), 'dist/sprites.jpg'),
+      result.image
+    );
+
+    const code = source.replace(regex, (match) => "url('./sprites.jpg')");
+
+    // 输出 index.css
+    fs.writeFileSync(path.join(process.cwd(), 'dist/index.css'), code);
+
+    callback(null, code);
+  });
+
+  return source;
+};
+```
+
+在 `loader-runner` 中使用 `sprite-loader`:
+
+```javascript title="run-sprites-loader.js"
+const path = require('path');
+const { runLoaders } = require('loader-runner');
+const fs = require('fs');
+
+runLoaders(
+  {
+    resource: path.join(__dirname, './src/index.css'),
+    loaders: [
+      {
+        loader: path.join(__dirname, './loaders/sprites-loader.js'),
+      },
+    ],
+    context: { minimize: true },
+    readResource: fs.readFile.bind(fs),
+  },
+  (err, result) => {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log(result);
+    }
+  }
+);
+```
+
+执行 `node run-sprites-loader.js`，结果如下：
+
+![sprites-loader](https://ypyun.ywhoo.cn/assets/20210603185338.png)
+
+```css title="index.css"
+body {
+  background: url('./sprites.jpg');
+}
+
+.banner {
+  background: url('./sprites.jpg');
+}
+```
+
+### 插件基本结构介绍
+
+loader 负责处理资源，即将各种资源当成模块来处理。而插件可以介入 webpack 构建的生命周期中。
+
+- 插件没有像 loader 那样独立的运行环境（loader-runner）。
+- 只能在 webpack 里面运行。
+
+![插件基本结构](https://ypyun.ywhoo.cn/assets/20210603185929.png)
+
+例子：
+
+```javascript title="my-plugin.js"
+module.exports = class MyPlugin {
+  constructor(options) {
+    console.log(options);
+  }
+
+  apply(compiler) {
+    console.log('执行 my-plugin');
+  }
+};
+```
+
+```javascript title="webpack.config.js"
+const path = require('path');
+const MyPlugin = require('./plugins/my-plugin'); // 自定义插件
+
+module.exports = {
+  entry: path.join(__dirname, './src/index.js'),
+  output: {
+    filename: 'bundle.js',
+    path: path.resolve(__dirname, './dist'),
+  },
+  plugins: [new MyPlugin({ name: 'ywhoo' })],
+};
+```
+
+### 更复杂的插件开发场景
+
+#### 插件的错误处理
+
+- `throw new Error('error');`。
+- 通过 compilation 对象的 warnings 和 errors 接收。
+  - `compilation.warnings.push('warning');`
+  - `compilation.errors.push('error');`
+
+#### 通过 Compilation 进行文件写入
+
+文件的生成在 `emit` 阶段，可以监听 `emit`，然后获取到 `compilation` 对象。
+
+Compilation 上的 assets 可以用于文件写入
+
+- 可以将 zip 资源包设置到 compilation.assets 对象上。
+
+文件写入需要使用 `webpack-sources` 库，示例：
+
+```javascript
+const { RawSource } = require('webpack-sources');
+
+module.exports = class DemoPlugin {
+  constructor(options) {
+    this.options = options;
+  }
+
+  apply(compiler) {
+    const { name } = this.options;
+
+    compiler.compilation.hooks.emit.tap('emit', (compilation, cb) => {
+      compilation.assets[name] = new RawSource('demo');
+
+      cb();
+    });
+  }
+};
+```
+
+#### 插件扩展：编写插件的插件
+
+插件自身也可以通过暴露 hooks 的方式进行自身扩展，以 html-webpack-plugin 为例，它支持一下 hook:
+
+- html-webpack-plugin-after-chunks（sync）
+- html-webpack-plugin-before-html-generation（async）
+- html-webpack-plugin-after-asset-tags（async）
+- html-webpack-plugin-after-html-processing（async）
+- html-webpack-plugin-after-emit（async）
+
+### 实战开发一个压缩构建资源为 zip 包的插件
+
+要求：
+
+- 生成的 zip 包文件名称可以通过插件传入。
+- 需要使用 compiler 对象上的 hooks 进行资源的生成。
+
+#### 准备知识
+
+nodejs 里使用 jszip 创建和编辑 zip 包。
+
+#### 复习：Compiler 上负责文件生成的 hook
+
+emit, 一个异步的 hook（AsyncSeriesHook）
+
+emit 生成文件阶段，读取的是 compilation.assets 对象的值。
+
+- 将 zip 资源包设置到 compilation.assets 对象上。
+
+实现 `zip-plugin.js`:
+
+```javascript
+const JSZip = require('jszip');
+const path = require('path');
+const { Compilation, sources } = require('webpack');
+
+module.exports = class ZipPlugin {
+  constructor(options) {
+    this.options = options;
+  }
+
+  apply(compiler) {
+    const { filename } = this.options;
+
+    // 监听 compilation 的 hooks
+    compiler.hooks.compilation.tap('ZipPlugin', (compilation) => {
+      // 监听 processAssets hook，即在处理构建资源的过程中，可以拿到静态资源
+      compilation.hooks.processAssets.tapPromise(
+        {
+          name: 'ZipPlugin',
+          stage: Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL,
+        },
+        (assets) => {
+          return new Promise((resolve, reject) => {
+            const zip = new JSZip();
+
+            // 创建压缩包
+            const folder = zip.folder(filename);
+
+            Object.entries(assets).forEach(([fname, source]) => {
+              // 将打包好的资源文件添加到压缩包中
+              folder.file(fname, source.source());
+            });
+
+            zip.generateAsync({ type: 'nodebuffer' }).then(function (content) {
+              // /Users/yewei/Project/source-code-realize/play-webpack/source/mini-plugin/dist/ywhoo.zip
+              const outputPath = path.join(
+                compilation.options.output.path,
+                `${filename}.zip`
+              );
+
+              // 相对路径 ywhoo.zip
+              const relativeOutputPath = path.relative(
+                compilation.options.output.path,
+                outputPath
+              );
+
+              // 将 buffer 转船 raw source
+              // 将 zip 包添加到 compilation 的构建资源中
+              compilation.emitAsset(
+                relativeOutputPath,
+                new sources.RawSource(content)
+              );
+
+              resolve();
+            });
+          }).catch((e) => {
+            console.log(e, 'e');
+          });
+        }
+      );
+    });
+  }
+};
+```
+
+使用插件：
+
+```javascript title="webpack.config.js"
+const path = require('path');
+const ZipPlugin = require('./plugins/zip-plugin');
+
+module.exports = {
+  entry: path.join(__dirname, './src/index.js'),
+  output: {
+    filename: 'bundle.js',
+    path: path.resolve(__dirname, './dist'),
+  },
+  plugins: [new ZipPlugin({ filename: 'ywhoo' })],
+};
+```
+
+运行 `yarn build`，会在 dist 目录下生成 `ywhoo.zip`。
+
+![结果](https://ypyun.ywhoo.cn/assets/20210603224907.png)
+
+### 总结
+
+如果跟着实践笔记走到了这里，相信大家对 webpack 不再是那么陌生，而且对原理也有了一定程度的了解，能够编写 loader 处理静态资源，编写插件控制 webpack 构建过程中的每一个阶段。最后想说一句话与大家共勉，行路虽难，但贵在看到曙光的那一刻。
