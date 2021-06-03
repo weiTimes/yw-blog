@@ -2504,3 +2504,79 @@ Build-构建阶段:
 ### webpack 流程篇：文件生成
 
 完成构建后，执行 hooks.seal、hooks.optimize 对构建结果进行优化，优化完成后出触发 hooks.emit，将构建结果输出到磁盘上。
+
+### 动手编写一个简易的 webpack
+
+#### 模块化：增强代码可读性和维护性
+
+闭包 + 立即执行函数 → angularjs 的依赖注入 → nodejs 的 commonjs -> AMD -> es2015 的 esmodule。
+
+- 传统的网页开发转变成 Web App 开发。
+- 代码复杂度在逐步增高。
+- 分离的 js 文件/模块，便于后续代码的维护。
+- 部署时希望把代码优化成多个 HTTP 请求。
+
+常见的几种模块化方式：
+
+```javascript
+// esmodule
+// 静态分析，不能动态，只能在文件最顶层导入。
+import * as largeNumber from 'large-number';
+
+largeNumber('99');
+```
+
+```javascript
+// commonjs
+// nodejs 默认遵循的规范，支持动态导入
+const largeNumber = require('large-number');
+
+largeNumber('99');
+```
+
+```javascript
+// AMD
+// 借鉴 commonjs，浏览器中经常使用
+require(['large-number'], function (largeNumber) {
+  largeNumber.add('99');
+});
+```
+
+#### AST 基础知识
+
+AST 即抽象语法树，是源代码的抽象语法结构的树状表现形式。
+
+![AST](https://ypyun.ywhoo.cn/assets/20210602203846.png)
+
+AST 的使用场景：
+
+- 模板引擎实现的两种方式
+  - 正则匹配
+  - AST
+- es6 → es5 或 ts → js
+
+[AST 在线解析引擎](https://esprima.org/demo/parse.html#)
+
+#### webpack 的模块机制
+
+- 打包出来的是一个 IIFE（匿名闭包函数）。
+- modules 是一个数组，每一项是一个模块初始化函数。
+- `__webpack_require__` 用来加载模块，返回 `module.exports`。
+- 通过 `WEBPACK_REQUIRE_METHOD(0)` 启动程序。
+
+#### 一个简易的 webpack 需要支持一下特性：
+
+- 支持将 es6 转换成 es5。
+  - 通过 `parse` 生成 AST。
+  - 通过 `transformFromAstSync` 将 AST 重新生成 es5 源码。
+- 可以分析模块之间的依赖关系。
+  - 通过 `traverse` 的 `ImportDeclaration` 方法获取依赖属性。
+- 生成的 js 文件可以在浏览器中运行。
+
+#### 编写步骤
+
+1. 编写 `minipack.config.js`。
+2. 编写 `parser.js`，实现将 es6 的代码转换成 AST，然后分析依赖，将 AST 转换成 es5 代码。
+3. 编写 `compiler.js`，实现开始构建、构建模块、将结果输出到磁盘功能。
+
+实现的源码我放在了这里，[点击查看](https://github.com/weiTimes/source-code-realize/tree/master/play-webpack/source/mini-webpack)
