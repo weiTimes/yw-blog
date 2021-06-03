@@ -2580,3 +2580,102 @@ AST 的使用场景：
 3. 编写 `compiler.js`，实现开始构建、构建模块、将结果输出到磁盘功能。
 
 实现的源码我放在了这里，[点击查看](https://github.com/weiTimes/source-code-realize/tree/master/play-webpack/source/mini-webpack)
+
+## 编写 loader 和插件
+
+### loader 的链式调用和执行顺序
+
+#### 一个最简单的 loader 代码结构
+
+定义：loader 是一个导出为函数的 js 模块：
+
+```javascript
+module.exports = function (source) {
+  return source;
+};
+```
+
+#### 多 loader 时的执行顺序
+
+- 串行执行：前一个的执行结果会传递给后一个 loader。
+- 按从右往左的顺序执行。
+
+```javascript
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.less/,
+        use: ['style-loader', 'css-loader', 'less-loader'],
+      },
+    ],
+  },
+};
+```
+
+#### 函数组合的两种情况
+
+- Unix 中的 pipline
+- Compose
+
+```javascript
+compose =
+  (f, g) =>
+  (...args) =>
+    f(g(...args));
+```
+
+#### 验证 loader 顺序的执行
+
+[源码地址]()
+
+### 使用 loader-runner 高效进行 loader 的调试
+
+> 上一小节验证 loader 执行顺序的时候，需要先安装 `webpack webpack-cli`，然后编写 `webpack.config.js`，将编写的 loader 引入对应的配置文件中，这个过程比较繁琐，可以使用更高效的 loader-runner，进行 loader 的开发和调试。它允许在不安装 webpack 的情况下运行 loader。
+
+loader-runner 的作用：
+
+- 作为 webpack 的依赖，webpack 中使用它执行 loader。
+- 进行 loader 的开发和调试。
+
+#### 编写 raw-loader，使用 loader-runner 运行
+
+实现 `raw-loader`:
+
+```javascript
+module.exports = function rawLoader(source) {
+  const str = JSON.stringify(source)
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029'); // 模板字符串存在安全问题，这里对模板字符串进行转义处理
+
+  return `export default ${str}`; // 将文件内容转换成模块
+};
+```
+
+在 loader-runner 中调用 `raw-loader`：
+
+```javascript title="run-loader.js"
+const path = require('path');
+const { runLoaders } = require('loader-runner');
+const fs = require('fs');
+
+runLoaders(
+  {
+    resource: path.join(__dirname, './src/info.txt'),
+    loaders: [path.join(__dirname, './loaders/raw-loader.js')],
+    context: { minimize: true }, // 接收的上下文
+    readResource: fs.readFile.bind(fs), // 读取文件的方式
+  },
+  (err, result) => {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log(result);
+    }
+  }
+);
+```
+
+执行 `node run-loader.js`，以下是输出结果：
+
+![run-loader](https://ypyun.ywhoo.cn/assets/20210603150345.png)
