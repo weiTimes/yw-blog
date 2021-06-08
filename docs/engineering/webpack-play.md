@@ -1,6 +1,6 @@
 ---
 id: webpack-play
-title: 玩转webpack
+title: 玩转webpack5
 ---
 
 > 我将源码放在我的仓库中，可以对照着文档阅读。源码地址：[玩转 webpack](https://github.com/weiTimes/source-code-realize/tree/master/play-webpack)
@@ -8,6 +8,16 @@ title: 玩转webpack
 ## 前言
 
 本篇长文是学习程柳峰老师开设的《玩转 webpack》专栏的实践笔记，和专栏不一样的是，我的实战源码是基于 webpack5，它的配置和源码实现上与 webpack4 有许多不同的地方，感兴趣的同学可以结合我在上面放出的源码仓库进行学习，相信会有不小的收获。
+
+看完本篇长文，你将收获：
+
+- 能够根据项目需求灵活的进行 webpack 的配置。
+- 理解 Tree Shaking、Scope Hoisting 等原理。
+- 能够实现打包多页应用、组件库和基础库、SSR 等。
+- 编写可维护的 webpack 配置，结合单元测试、冒烟测试等控制代码质量，使用 Travis 实现持续集成。
+- 知道如何优化构建速度和构建资源体积。
+- 通过源代码掌握 webpack 打包原理
+- 编写 loader 和 plugin。
 
 ## 初识 webpack
 

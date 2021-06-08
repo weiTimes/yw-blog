@@ -19,9 +19,7 @@ array.pop(); // 出栈 b
 array.pop(); // 出栈 b
 ```
 
-### 例题
-
-#### 判断字符串括号是否合法
+### 判断字符串括号是否合法
 
 输入："()"
 
@@ -128,6 +126,7 @@ function isValid(s) {
   let stack = [];
   let i = 0;
 
+  // 第一个就不是左括号
   if (!validArray.includes(s[i])) return false;
 
   while (i < s.length) {
@@ -145,3 +144,151 @@ function isValid(s) {
 
 console.log(isValid('{[(]]}'));
 ```
+
+### 单调栈
+
+单调栈就是指栈中的元素必须是按照升序排列的栈，或者是降序排列的栈。对于这两种排序方式的栈，还给它们各自取了小名。
+
+- 递增栈
+  - 消除 - 小数消除大数
+  - 栈中元素递增
+- 递减栈
+  - 消除 - 大数消除小数
+  - 栈中元素递减
+
+### 找出数组中右边比我小的元素
+
+```javascript
+使用单调递增栈
+当前值和栈顶的值比较
+  比栈顶大，入栈
+  比栈顶小，当前下标即为栈顶元素的右边最小的元素下标，栈顶出栈，当前下标入栈
+最后将剩余的栈元素状态置为 -1
+
+时间复杂度为 O(N)，而空间复杂度为 O(N)
+
+const findSmallSeq = (nums) => {
+  const res = [];
+  const stack = [];
+
+  const isEmpty = () => stack.length === 0;
+  const peek = () => stack[stack.length - 1];
+
+  for (let i = 0; i < nums.length; i++) {
+    const cur = nums[i];
+
+    while (!isEmpty() && nums[peek()] > cur) {
+      // 栈顶的值比当前值大，记录下标，出栈
+      res[peek()] = i;
+
+      stack.pop();
+    }
+
+    stack.push(i);
+  }
+
+  while (!isEmpty()) {
+    res[peek()] = -1;
+
+    stack.pop();
+  }
+
+  return res;
+};
+
+// console.log(findSmallSeq([5, 2])); // [1, -1]
+console.log(findSmallSeq([1, 2, 4, 9, 4, 0, 5])); // [5, 5, 5, 4, 5, -1, -1]
+```
+
+### 字典序最小的 k 个数的子序列
+
+时间复杂度为 O(N)，而空间复杂度为 O(N)
+
+```javascript
+const findSmallSep = (nums, k) => {
+  const res = [];
+  const stack = [];
+
+  const size = () => stack.length;
+  const peek = () => stack[size() - 1];
+  const isEmpty = () => size() === 0;
+
+  for (let i = 0; i < nums.length; i++) {
+    // 栈不为空 && 栈顶元素大于当前值 && (栈长度 + 剩余未遍历的数量) > k
+    while (!isEmpty() && nums[i] < peek() && size() + (nums.length - i) > k) {
+      stack.pop();
+    }
+
+    stack.push(nums[i]);
+  }
+
+  while (size() > k) {
+    stack.pop();
+  }
+
+  for (let i = k - 1; i >= 0; i--) {
+    res[i] = peek();
+    stack.pop();
+  }
+
+  return res;
+};
+
+// [1, 2, 0]
+console.log(findSmallSep([9, 2, 4, 5, 1, 2, 3, 0], 3));
+```
+
+### 数组-84-柱状图中最大的矩形
+
+思路：
+
+- 单调栈（递增） + 哨兵
+- 看到元素的高度严格小于栈顶的高度时，出栈，计算面积，否则入栈
+
+```javascript
+var largestRectangleArea = function (heights) {
+  let len = heights.length;
+
+  if (len === 0) return 0;
+  if (len === 1) return heights[0];
+
+  // 前后加入哨兵，可以保证栈不为空
+  const newHeight = [0, ...heights, 0];
+  len = newHeight.length;
+
+  let area = 0;
+
+  const peek = () => stack[stack.length - 1];
+  const stack = [0];
+
+  // 遍历数组，下标从 1 开始
+  for (let i = 1; i < len; i++) {
+    const curHeight = newHeight[i];
+
+    // 当前元素 < 栈顶元素 -> 出栈 -> 确认面积
+    while (curHeight < newHeight[peek()]) {
+      // 先出栈
+      const topIndex = stack.pop();
+      // 最后栈顶元素为哨兵元素，下标为0，即元素最左可以到达0，最右边是当前遍历到的最后一个元素下标
+      const width = i - peek() - 1;
+      area = Math.max(area, width * newHeight[topIndex]);
+    }
+
+    stack.push(i);
+  }
+
+  return area;
+};
+
+const result = largestRectangleArea([2, 1, 2]);
+// const result = largestRectangleArea([2, 1, 5, 6, 2, 3]);
+// const result = largestRectangleArea([1, 1]);
+console.log(result, 'res');
+```
+
+#### 小结
+
+- 较小的数消除掉较大的数的时候，使用递增栈。
+- 要注意控制剩下的元素的个数。
+
+![总结](https://ypyun.ywhoo.cn/assets/20210606112852.png)
