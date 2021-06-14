@@ -36,6 +36,7 @@ module.exports = {
         items: [
           'framework/react-interview',
           'framework/react-cycle',
+          'framework/react-hooks',
           'framework/react-optim',
           'framework/react-vue',
           'framework/react-mini',
@@ -44,7 +45,7 @@ module.exports = {
       },
     ],
     网络协议: ['network/perspective-network'],
-    基础建设与架构设计: ['structure/react-ssr'],
+    基础建设与架构设计: ['structure/react-ssr', 'structure/scaffold-degisn'],
     Typescript: ['typescript/base'],
     CSS: ['css/tricks'],
     规范: ['styleguide/git-basic', 'styleguide/commit', 'styleguide/git-flow'],
@@ -65,7 +66,11 @@ module.exports = {
     算法: ['algorithms/data-structure', 'algorithms/algorithms-topics'],
     设计模式: ['design-mode/origin-dev'],
     使用Storybook设计系统: ['storybook/introduce', 'storybook/start'],
-    开发工具: ['tools/vim-100s', 'tools/five-ways-vscode'],
+    开发工具: [
+      'tools/vim-100s',
+      'tools/five-ways-vscode',
+      'tools/vscode-plugin',
+    ],
     问题: [
       'problem/not-access-github',
       'problem/brew-solve-slow',

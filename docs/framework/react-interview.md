@@ -159,6 +159,8 @@ JSX 主要用于声明 React 元素，但 React 中并不强制使用 JSX。即�
 
 ### 如何避免生命周期中的坑
 
+![生命周期](https://ypyun.ywhoo.cn/assets/20210609105453.png)
+
 #### 破题
 
 遇到的坑往往有两种：
@@ -168,9 +170,9 @@ JSX 主要用于声明 React 元素，但 React 中并不强制使用 JSX。即�
 
 通过梳理生命周期，明确周期函数职责，确认什么时候该做什么事儿，以此来避免坑。
 
-#### 概念
+#### 生命周期概念（周期梳理）
 
-挂载 -> 更新 -> 卸载这一 react 组件的完成流程，就是完整的生命周期。
+挂载 → 更新 → 卸载这一 react 组件的完成流程，就是完整的生命周期。
 
 #### 挂载阶段
 
@@ -201,7 +203,7 @@ JSX 主要用于声明 React 元素，但 React 中并不强制使用 JSX。即�
 
 常见的错误是 `componentWillMount` 在同构渲染时，在该函数中发起网络请求，客户端和服务器端分别会执行一次，所以推荐在 `componentDidMount` 中发起网络请求。
 
-被弃用后，即使是加上 `UNSAFE_` 前缀，该函数也不会被执行。
+当 `getDerivedStateFromProps` 存在时，该函数不会被执行。
 
 `render`:
 
@@ -217,10 +219,123 @@ render 函数返回 jsx，用于描述具体的渲染内容。
 
 ##### 总结挂载阶段函数的调用顺序
 
-constructor -> getDerivedStateFromProps -> render -> componentDidMount。
+constructor → getDerivedStateFromProps → render → componentDidMount。
 
 如果有子组件，包含子组件挂载阶段的调用顺序：
 
-constructor -> getDerivedStateFromProps -> render -> child-constructor -> child-getDerivedStateFromProps -> child-render - child-componentDidMount -> componentDidMount。
+constructor → getDerivedStateFromProps → render → child-constructor → child-getDerivedStateFromProps → child-render → child-componentDidMount → componentDidMount。
 
 #### 更新阶段
+
+如果接收到新的 `props` 或 `state`，就是更新阶段。
+
+`UNSAFE_componentWillReceiveProps`:
+
+已被弃用，其功能可被 getDerivedStateFromProps 代替。
+
+当 getDerivedStateFromProps 存在时，该函数不会被执行。
+
+`getDerivedStateFromProps`:
+
+通挂载阶段表现一致。
+
+`shouldComponentUpdate`:
+
+通过返回一个布尔类型的值来确定是否要触发新的渲染，可用作性能优化，通过添加判断条件来阻断渲染。
+
+PureComponent 默认实现了 shouldComponentUpdate 函数，在该函数中对 props 和 state 进行浅比较，根据比较结果判断是否触发更新。
+
+```javascript
+shouldComponentUpdate(nextProps, nextState) {
+  // 浅比较仅比较值与引用，并不会对 Object 中的每一项值进行比较
+  if (shadowEqual(nextProps, this.props) || shadowEqual(nextState, this.state) ) {
+    return true
+  }
+  return false
+}
+```
+
+`UNSAFE_componentWillUpdate`:
+
+已被废弃。在异步渲染的场景中，可能会出现组件暂停更新渲染的情况。
+
+`render`:
+
+同挂载阶段一致。
+
+`getSnapshotBeforeUpdate`:
+
+配合 react 新的异步渲染机制，在 DOM 更新发生前被调用，返回值将作为 componentDidUpdate 的第三个参数。
+
+`componentDidUpdate`:
+
+可以使用 setState，会触发重新渲染，但要注意避免陷入死循环。
+
+##### 总结更新阶段函数的调用顺序
+
+getDerivedStateFromProps → shouldComponentUpdate → render → getSnapshotBeforeUpdate → componentDidUpdate
+
+#### 卸载阶段
+
+`componentWillUnmount`:
+
+主要用于清理工作。如取消定时器、移除事件绑定。
+
+#### 职责梳理
+
+- 什么情况下会触发重新渲染。
+- 渲染中发生报错后会怎样？如何处理报错？
+
+下面三种情况下会发生重新渲染：
+
+##### 函数组件
+
+函数组件任何情况下都会重新渲染。它没有生命周期，可以使用 React.memo 进行优化。
+
+React.memo 没有阻断渲染，而是跳过渲染组件的操作并直接复用最近一次渲染的结果。
+
+##### React.Component
+
+如果没有实现 shouldComponentUpdate，有两种情况会触发重新渲染：
+
+- state 发生变化。
+- 父组件传入 props 时，无论有没有变化，只要传入就会引发重新渲染。
+
+##### React.PureComponent
+
+默认实现了 shouldComponentUpdate，对 props 和 state 进行浅比较，确认有变更时触发更新。
+
+#### 错误边界
+
+可以捕获并打印发生在其子组件树任何位置的 javascript 错误，并渲染出备用 UI。
+
+处理了错误边界，就不会在应用崩溃时页面白屏。
+
+在做 _错误监控_ 时，可以通过 `componentDidCatch` 捕获渲染时的错误。
+
+#### 答题
+
+避免生命周期中的坑要做好两件事：
+
+- 不在不恰当的时候调用不该调用的代码；
+- 在需要调用时，不要忘了调用。
+
+主要有 7 种情况容易造成生命周期的坑：
+
+- `getDerivedStateFromProps` 容易编写反模式代码，使受控组件和非受控组件区分模糊。
+- `componentWillMount` 已被弃用，主要原因是新的异步渲染架构会导致它被多次调用，所以网络请求和事件绑定应该移到 componentDidMount 中。
+- `componentWillReceiveProps` 已被弃用，被 getDerivedStateFromProps 取代，主要是性能问题。
+- `shouldComponentUpdate` 通过返回布尔类型的值来确定是否需要出发重新渲染，主要用于性能优化（要注意 PureComponent 默认实现了它， 但只是浅比较）。
+- `componentWillUpdate` 已被弃用，同样是因为新的异步渲染的架构，可能会出现组件暂停更新的情况，原先的逻辑可以结合 getSnapshotBeforeUpdate 与 componentDidUpdate 改造使用。
+- `componentWillUnmount` 中忘记清除定时器和移除事件绑定等操作，容易引发 bug。
+
+如果没有添加错误边界处理，当渲染发生异常时，页面将会出现白屏。
+
+#### React 的请求应该放在哪里，为什么？
+
+对于异步请求，应该放在 componentDidMount 中，另外还可以有以下选择：
+
+- constructor: 可以放，但从设计上而言不推荐。constructor 主要用于初始化 state 和事件绑定，并不承载业务逻辑，随着类属性的流行，它已经很少使用了。
+- componentWillMount: 已被标记废弃，在新的异步渲染架构中，可能会触发多次渲染，容易引发 bug。
+
+所以放在 componentDidMount 中是最好的选择。

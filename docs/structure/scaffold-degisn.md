@@ -1,5 +1,5 @@
 ---
-id: react-ssr
+id: scaffold-degisn
 title: 如何设计一个“万能”项目脚手架？
 ---
 
@@ -22,14 +22,54 @@ title: 如何设计一个“万能”项目脚手架？
 - `listr`: 可以在命令行画出进度列表。
 - `meow`、`arg`: 进行基础的命令行参数解析。
 - `commander`、`yargs`: 进行更加复杂的命令行参数解析。
+- `shelljs`: 使用 javascript 编写 shell 命令。
 
 目标是通过以下方式快速创建项目：
 
 ```shell
-# npm
-npm init @km/project
 # yarn
-yarn create @km/project
+yarn create km-project
+# npm
+npm init km-project
 ```
 
+或全局安装后运行命令：
+
+```shell
+# yarn
+yarn global add km-create
+# npm
+npm install km-create -g
+```
+
+安装成功就可以全局执行 `km-create` 命令。
+
 ## 创建命令行项目
+
+```shell
+mkdir km-scaffold && cd km-scaffold
+yarn init -y
+```
+
+项目最终的目录结构如下：
+
+![目录结构](https://ypyun.ywhoo.cn/assets/20210610161007.png)
+
+首先编写命令行入口文件：
+
+```javascript title="bin/create-project.js"
+#!/usr/bin/env node
+require = require('esm')(module);
+
+require('../src/cli').cli(process.argv);
+```
+
+上述代码中使用了 `esm` 模块，这样就可以在其它引用的文件中使用 esmodule，`src/cli.js` 的代码如下:
+
+```javascript
+export function cli(args) {
+  console.log(args);
+}
+```
+
+在执行 `km-`
