@@ -719,9 +719,7 @@ class Heap {
     let parent = 0;
 
     // 如果还存在父节点，下标从 0 开始，0 没有父节点
-    while (i > 0) {
-      parent = (i - 1) >> 1; // 父节点索引
-
+    while (i > 0 && (parent = (i - 1) >> 1) !== i) {
       if (this.a[parent] < temp) {
         // 将父节点向下移动，更新 i 的位置
         this.a[i] = this.a[parent];
@@ -876,9 +874,7 @@ class Heap {
     let parent = 0;
 
     // 如果还存在父节点，下标从 0 开始，0 没有父节点
-    while (i > 0) {
-      parent = (i - 1) >> 1; // 父节点索引
-
+    while (i > 0 && (parent = (i - 1) >> 1) !== i) {
       if (this.a[parent] < temp) {
         // 将父节点向下移动，更新 i 的位置
         this.a[i] = this.a[parent];
@@ -901,4 +897,142 @@ heap.push(5);
 heap.pop();
 
 console.log(heap, 'heap');
+```
+
+### 例 1：最小的 k 个数
+
+#### 解法一：先排序后取前三个数
+
+时间复杂度：O(nlgn)。
+
+#### 解法二：使用大堆
+
+维护堆的长度为 n，不断的进行 push 操作，一旦长度超过 k，就进行 pop 操作，最后去堆长度的值作为返回值。
+
+时间复杂度：O(nlgk)，因为所有数都需要入堆，堆 push 的时间复杂度未 O(lgk)。
+
+空间复杂度：O(k)。
+
+```javascript
+var getLeastNumbers = function (arr, k) {
+  if (!arr || k <= 0) return [];
+
+  const len = arr.length;
+
+  if (len <= k) return arr;
+
+  const heap = new Heap(k + 1);
+
+  for (let i = 0; i < len; i++) {
+    heap.push(arr[i]);
+
+    if (heap.n > k) {
+      // 超出了，需要 pop
+      heap.pop();
+    }
+  }
+
+  return heap.array.slice(0, heap.n);
+};
+```
+
+#### 练习题 1：347. 前 K 个高频元素
+
+实现：先使用 hashmap，建立元素与次数的映射关系，然后使用最小堆，堆的大小为 `k + 1`，通过 `push` 和 `pop` 操作维持堆的长度为 `k`，最终将堆中元素返回。
+
+实现：
+
+```javascript
+// 最小堆
+class MinHeap {
+  constructor(k) {
+    this.a = new Array(k);
+    this.n = 0;
+  }
+
+  size() {
+    return this.n;
+  }
+
+  push(val) {
+    this.a[this.n] = val;
+
+    this.swim(this.n);
+
+    this.n += 1;
+  }
+
+  pop() {
+    const ret = this.a[0];
+
+    this.a[0] = this.a[this.n - 1];
+
+    this.sink(0);
+
+    this.n -= 1;
+
+    return ret;
+  }
+
+  swim(i) {
+    const temp = this.a[i];
+    let parent = 0;
+
+    while (i > 0 && (parent = (i - 1) >> 1) !== i) {
+      if (this.a[parent][1] > temp[1]) {
+        this.a[i] = this.a[parent];
+        i = parent;
+      } else {
+        break;
+      }
+    }
+
+    this.a[i] = temp;
+  }
+
+  sink(i) {
+    const temp = this.a[i];
+
+    let j = 0;
+
+    while ((j = (i << 1) + 1) < this.n) {
+      if (j + 1 < this.n && this.a[j + 1][1] < this.a[j][1]) {
+        j = j + 1;
+      }
+
+      if (this.a[j][1] < temp[1]) {
+        this.a[i] = this.a[j];
+        i = j;
+      } else {
+        break;
+      }
+    }
+
+    this.a[i] = temp;
+  }
+}
+
+var topKFrequent = function (nums, k) {
+  if (!nums || k <= 0) return [];
+
+  let len = nums.length;
+
+  const heap = new MinHeap(k + 1);
+  const map = new Map();
+
+  for (let i = 0; i < len; i++) {
+    const count = map.has(nums[i]) ? map.get(nums[i]) : 0;
+    map.set(nums[i], count + 1);
+  }
+
+  for (const item of map) {
+    heap.push(item);
+
+    if (heap.n > k) {
+      heap.pop();
+    }
+  }
+
+  return heap.a.map((item) => item[0]).slice(0, k);
+};
 ```
