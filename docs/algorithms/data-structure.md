@@ -3,6 +3,8 @@ id: data-structure
 title: 数据结构
 ---
 
+> 算法这一部分包含数据结构和算法题，关于算法题这里可能不是很完整，完整的代码实现可以到[我的仓库中](https://github.com/weiTimes/front-source-code/tree/master/algorithms)查看。
+
 ## 栈：从简单栈到单调栈，解决经典栈问题
 
 ### 栈的特性与使用
@@ -1035,4 +1037,317 @@ var topKFrequent = function (nums, k) {
 
   return heap.a.map((item) => item[0]).slice(0, k);
 };
+```
+
+习题：
+
+- [[347] 前 K 个高频元素](https://leetcode-cn.com/problems/top-k-frequent-elements/description/)
+- [[692] 前 K 个高频单词](https://leetcode-cn.com/problems/top-k-frequent-words/description/)
+- [[973] 最接近原点的 K 个点](https://leetcode-cn.com/problems/k-closest-points-to-origin/)
+- [[373] 查找和最小的 K 对数字](https://leetcode-cn.com/problems/find-k-pairs-with-smallest-sums/)
+
+### 优先级队列
+
+![queue](https://ypyun.ywhoo.cn/assets/20210702223453.png)
+
+#### 例题：跳跃游戏
+
+> [1642. 可以到达的最远建筑](https://leetcode-cn.com/problems/furthest-building-you-can-reach/)
+
+**思路：**初始位置在下标 0，如果下一个高度小于等于当前高度，则直接移动记录索引。当大于当前高度，就需要用到砖头和梯子，记录高度差，然后入堆（大顶堆），再记录总的高度差，一旦大于砖头的数量并且有梯子，执行堆 pop 操作，总的高度差减去取出的最大值并梯子减 1；经过以上操作，如果总高度差小于等于砖头数量，就移动记录索引，否则就退出循环。
+
+##### 实现
+
+```javascript
+class Heap {
+  constructor(k) {
+    this.a = new Array(k);
+    this.n = 0;
+  }
+
+  push(val) {
+    this.a[this.n++] = val;
+
+    this.swim(this.n - 1);
+  }
+
+  pop() {
+    const ret = this.a[0];
+
+    this.a[0] = this.a[--this.n];
+
+    this.sink(0);
+
+    return ret;
+  }
+
+  swim(i) {
+    while (i > 0) {
+      const temp = this.a[i];
+      const parentIndex = (i - 1) >> 1;
+
+      if (this.isMorePriority(temp, this.a[parentIndex])) {
+        this.a[i] = this.a[parentIndex];
+        this.a[parentIndex] = temp;
+        i = parentIndex;
+      } else {
+        break;
+      }
+    }
+  }
+
+  sink(i) {
+    while (i < this.n) {
+      const temp = this.a[i];
+      let j = 2 * i + 1;
+
+      if (j + 1 < this.n && this.isMorePriority(this.a[j + 1], this.a[j])) {
+        j = j + 1;
+      }
+
+      if (j < this.n && this.isMorePriority(this.a[j], temp)) {
+        this.a[i] = this.a[j];
+        this.a[j] = temp;
+        i = j;
+      } else {
+        break;
+      }
+    }
+  }
+
+  isMorePriority(a, b) {
+    return a > b;
+  }
+}
+
+var furthestBuilding = function (heights, bricks, ladders) {
+  if (!heights || heights.length <= 0) return -1;
+
+  const len = heights.length;
+  const heap = new Heap(len + 1);
+  let prevHeight = heights[0];
+  let needHeight = 0;
+  let pos = 0;
+
+  for (let i = 1; i < len; i++) {
+    const cur = heights[i];
+
+    if (cur <= prevHeight) {
+      pos = i;
+    } else {
+      const delta = cur - prevHeight;
+
+      heap.push(delta);
+      needHeight += delta;
+
+      // 只有在砖头不够用的情况下用梯子
+      while (needHeight > bricks && ladders > 0) {
+        ladders -= 1;
+        const topHeight = heap.pop();
+        needHeight -= topHeight;
+      }
+
+      if (needHeight <= bricks) {
+        pos = i;
+      } else {
+        break;
+      }
+    }
+
+    prevHeight = cur;
+  }
+
+  return pos;
+};
+
+const re = furthestBuilding([4, 2, 7, 6, 9, 14, 12], 5, 1); // 4
+```
+
+**复杂度分析：**最坏的情况下需要将所有高度入堆，堆的操作是 O(lgN)，所有总的时间复杂度是 O(NlgN)，空间复杂度是 O(N)。
+
+#### 练习题
+
+- [x] [871. 最低加油次数](https://leetcode-cn.com/problems/minimum-number-of-refueling-stops/)
+
+### 总结
+
+![总结](https://ypyun.ywhoo.cn/assets/20210703185007.png)
+
+## 链表：如何利用“假头、新链表、双指针”解决链表题？
+
+解决链表问题的“三板斧”：假头、新链表、双指针。
+
+### 假头
+
+**假头又叫做 Dummy Head。**就是在链表前面，加上一个额外的节点，存放了 N 个数据的带假头的链表，算上假头一共有 N+1 个结点。
+
+添加了假头，可以省掉很多空指针的判断，使链表的各种操作变得更加的简洁。链表有 6 种基本的操作：
+
+- 初始化
+- 追加节点
+- 头部插入节点
+- 查找节点
+- 插入指定位置之前
+- 删除节点
+
+#### 初始化
+
+初始化假头链表，首先，我们需要 new 出一个链表结点，并且让链表的 dummy 和 tail 指针都指向它。
+
+```javascript
+class LinkNode {
+  constructor(val, next = null) {
+    this.val = val;
+    this.next = next;
+  }
+}
+
+class MyLinkedList {
+  constructor() {
+    const node = new LinkNode();
+    this.dummy = node;
+    this.tail = node;
+    this.size = 0;
+  }
+}
+```
+
+初始化完成后，链表已经有了一个结点，但是此时，整个链表中还没有任何数据。
+
+#### 追加节点
+
+```javascript
+// 在尾部添加新节点
+addAtTail(val) {
+  this.tail.next = new LinkNode(val);
+  this.tail = this.tail.next;
+
+  this.size += 1;
+}
+```
+
+带假头的链表初始化之后，可以保证 tail 指针永远非空，因此，也就可以直接去修改 tail.next 指针，省略掉了关于 tail 指针是否为空的判断。
+
+#### 头部插入结点
+
+需要插入的新结点为 p，插入之后，新结点 p 会成为第一个有意义的数据结点。通过以下 3 步可以完成头部插入：
+
+1. 新结点 p.next 指向 dummy.next；
+2. dummy.next 指向 p；
+3. 如果原来的 tail 指向 dummy，那么将 tail 指向 p。
+
+```javascript
+// 在头部添加新节点
+addAtHead(val) {
+  const node = new LinkNode(val);
+
+  node.next = this.dummy.next;
+  this.dummy.next = node;
+
+  if (this.tail === this.dummy) {
+    this.tail = node;
+  }
+
+  this.size += 1;
+}
+```
+
+#### 查找节点
+
+在查找索引值为 index（假设 index 从 0 开始）的结点时，你需要注意，大多数情况下，返回指定结点前面的一个结点 prev 更加有用。
+
+好处有以下两个方面：
+
+1. 通过 prev.next 就可以访问到你想要找到的结点，如果没有找到，那么 prev.next 为 null；
+2. 通过 prev 可以方便完成后续操作，比如在 target 前面 insert 一个新结点，或者将 target 结点从链表中移出去。
+
+先首先获取目标节点的上一个节点：
+
+```javascript
+  getPrevNode(index) {
+    let front = this.dummy.next; // 前指针
+    let back = this.dummy; // 后指针
+
+    for (let i = 0; i < index && front !== null; i++) {
+      back = front;
+      front = back.next;
+    }
+
+    return back;
+  }
+```
+
+有了假头的帮助，这段查找代码就非常健壮了，可以处理以下 2 种情况：
+
+- 如果 target 在链表中不存在，此时 prev 返回链表的最后一个结点；
+- 如果为空链表（空链表指只有一个假头的链表），此时 prev 指向 dummy。也就是说，返回的 prev 指针总是有效的。
+
+接下来实现 get 方法，即获取目标节点：
+
+```javascript
+  // 获取链表中 index 节点的值，如果索引无效，则返回 -1
+  get(index) {
+    if (index < 0 || index >= this.size) {
+      return -1;
+    }
+
+   // 因为getPrevNode总是返回有效的结点，所以可以直接取值。
+    return this.getPrevNode(index).next.val;
+  }
+```
+
+#### 插入指定位置之前
+
+插入指定位置的前面，有 4 个需求。
+
+1. 如果 index 大于链表长度，则不会插入结点。
+2. 如果 index 等于链表的长度，则该结点将附加到链表的末尾。
+3. 如果 index 小于 0，则在头部插入结点。
+4. 否则在指定位置前面插入结点。
+
+实现：
+
+```javascript
+  addAtIndex(index, val) {
+    if (index > this.size) {
+      return;
+    } else if (index === this.size) {
+      this.addAtTail(val);
+    } else if (index <= 0) {
+      this.addAtHead(val);
+    } else {
+      const node = new LinkNode(val);
+      const prevNode = this.getPrevNode(index);
+
+      node.next = prevNode.next;
+      prevNode.next = node;
+
+      this.size += 1;
+    }
+  }
+```
+
+#### 删除节点
+
+删除结点操作是给定要删除的下标 index（下标从 0 开始），删除的情况分 2 种：
+
+1. 如果 index 无效，那么什么也不做；
+2. 如果 index 有效，那么将这个结点删除。
+
+```javascript
+  deleteAtIndex(index) {
+    if (index < 0 || index >= this.size) {
+      return;
+    } else {
+      const prevNode = this.getPrevNode(index);
+
+      // 删除的是最后一个节点，改变 tail 指针
+      if (prevNode.next === this.tail) {
+        this.tail = prevNode;
+      }
+
+      prevNode.next = prevNode.next.next;
+      this.size -= 1;
+    }
+  }
 ```
