@@ -1177,7 +1177,7 @@ const re = furthestBuilding([4, 2, 7, 6, 9, 14, 12], 5, 1); // 4
 
 解决链表问题的“三板斧”：假头、新链表、双指针。
 
-### 假头
+### 三板斧的第一斧：假头
 
 **假头又叫做 Dummy Head。**就是在链表前面，加上一个额外的节点，存放了 N 个数据的带假头的链表，算上假头一共有 N+1 个结点。
 
@@ -1189,6 +1189,8 @@ const re = furthestBuilding([4, 2, 7, 6, 9, 14, 12], 5, 1); // 4
 - 查找节点
 - 插入指定位置之前
 - 删除节点
+
+[707. 设计链表](https://leetcode-cn.com/problems/design-linked-list/)
 
 #### 初始化
 
@@ -1351,3 +1353,351 @@ addAtHead(val) {
     }
   }
 ```
+
+### 三板斧的第二斧：新链表
+
+做链表的反转、交换等操作时，不建议直接在原来的链表上进行操作。一种可取的思路是，把这些操作想象成要生成新的链表，然后借助这些新的链表，完成原本比较复杂的操作。
+
+#### 链表翻转
+
+[206. 翻转链表](https://leetcode-cn.com/problems/reverse-linked-list/)
+
+思路：
+
+- 建立一个新的带假头的空链表；
+- 遍历旧链表，依次取出旧链表中的每个节点；
+- 采用头部插入的方法放到新链表中；
+- 返回 `dummy.next`;
+
+实现：
+
+```javascript
+var reverseList = function (head) {
+  let prev = null;
+  let cur = head;
+
+  while (cur !== null) {
+    const temp = cur.next;
+    cur.next = prev;
+    prev = cur;
+    cur = temp;
+  }
+
+  return prev;
+};
+```
+
+复杂度分析：时间复杂度 O(n)，空间复杂度 O(1)。
+
+#### 删除节点
+
+[83. 删除排序链表中的重复元素](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-list/)
+
+思路：
+
+1. 建立一个新的带假头的空链表；
+2. 遍历旧链表，依次取出旧链表中的每个点，如果不删除这个结点，那么就采用尾部插入方法接到新链表中。
+
+可以发现，在这里没有出现结点交换的操作。采用新链表的思路，避免了在原链表上不停地做结点的删除。
+
+```javascript
+var removeElements = function (head, val) {
+  let dummy = new ListNode();
+  let tail = dummy;
+
+  while (head !== null) {
+    if (head.val !== val) {
+      tail.next = head;
+      tail = head;
+    }
+
+    head = head.next;
+  }
+
+  tail.next = null;
+
+  return dummy.next;
+};
+```
+
+#### 给定一个排序链表，删除重复出现的元素，使得每个元素只出现一次。
+
+[83. 删除排序链表中的重复元素](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-list/)
+
+```javascript
+var deleteDuplicates = function (head) {
+  const dummy = new ListNode();
+  let tail = dummy;
+
+  while (head !== null) {
+    const temp = head.next;
+
+    if (dummy === tail || tail.val !== head.val) {
+      tail.next = head;
+      tail = head;
+    }
+
+    head = temp;
+  }
+
+  tail.next = null;
+
+  return dummy.next;
+};
+```
+
+#### 给定一个排序链表，删除重复出现的元素，只留下没有重复出现的元素。
+
+[82. 删除排序链表中的重复元素 II](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-list-ii/)
+
+```javascript
+var deleteDuplicates = function (head) {
+  if (!head) return null;
+
+  const dummy = new ListNode();
+  let tail = dummy;
+
+  while (head !== null) {
+    let cur = head;
+
+    while (cur.next !== null && cur.val === cur.next.val) {
+      cur = cur.next;
+    }
+
+    if (head === cur) {
+      tail.next = cur;
+      tail = cur;
+    }
+
+    head = cur.next;
+  }
+
+  tail.next = null;
+
+  return dummy.next;
+};
+```
+
+#### 合并
+
+##### [21. 合并两个有序链表](https://leetcode-cn.com/problems/merge-two-sorted-lists/)
+
+思路：使用一个指针指向较小的链表节点，不断地更新 tail 指针，最后判断哪个链表不为空，将不为空的链表加到 tail 后面。
+
+```javascript
+var mergeTwoLists = function (l1, l2) {
+  if (l1 === null && l2 === null) return null;
+  if (l1 === null) return l2;
+  if (l2 === null) return l1;
+
+  const dummy = new ListNode();
+  let tail = dummy;
+
+  while (l1 !== null && l2 !== null) {
+    const isL1Smaller = l1.val <= l2.val;
+    let cur = isL1Smaller ? l1 : l2;
+
+    tail.next = cur;
+    tail = cur;
+
+    if (isL1Smaller) {
+      l1 = l1.next;
+    } else {
+      l2 = l2.next;
+    }
+  }
+
+  tail.next = l1 === null ? l2 : l1;
+  tail = tail.next;
+
+  return dummy.next;
+};
+```
+
+##### [23. 合并 k 个升序链表]
+
+**思路：**先使用小顶堆存储所有的链表节点，然后定义一个带假头的空链表，当堆的长度不为 0，就执行 pop 操作，往新的链表中追加节点，最后返回 dummy.next。
+
+实现：
+
+```javascript
+class MinHeap {
+  constructor() {
+    this.a = [];
+    this.n = 0;
+  }
+
+  push(val) {
+    this.a[this.n++] = val;
+
+    this.swim(this.n - 1);
+  }
+
+  pop() {
+    const ret = this.a[0];
+
+    this.a[0] = this.a[--this.n];
+
+    this.sink(0);
+
+    return ret;
+  }
+
+  swim(i) {
+    while (i > 0) {
+      const temp = this.a[i];
+      const parentIndex = (i - 1) >> 1;
+      const parentNode = this.a[parentIndex];
+
+      if (this.isLessPriority(temp, parentNode)) {
+        this.a[i] = parentNode;
+        this.a[parentIndex] = temp;
+        i = parentIndex;
+      } else {
+        break;
+      }
+    }
+  }
+
+  sink(i) {
+    while (i < this.n) {
+      const temp = this.a[i];
+      let j = 2 * i + 1;
+
+      if (j + 1 < this.n && this.isLessPriority(this.a[j + 1], this.a[j])) {
+        j += 1;
+      }
+
+      if (j < this.n && this.isLessPriority(this.a[j], temp)) {
+        this.a[i] = this.a[j];
+        this.a[j] = temp;
+        i = j;
+      } else {
+        break;
+      }
+    }
+  }
+
+  isLessPriority(nodeA, nodeB) {
+    if (!nodeA || !nodeB) return false;
+
+    return nodeA.val <= nodeB.val;
+  }
+}
+
+var mergeKLists = function (lists) {
+  const linkedLength = lists.length;
+
+  if (!lists || linkedLength <= 0) return null;
+
+  if (linkedLength === 1) return lists[0];
+
+  const heap = new MinHeap(100);
+
+  for (let i = 0; i < linkedLength; i++) {
+    let curLinkedList = lists[i];
+
+    while (curLinkedList !== null) {
+      heap.push(curLinkedList);
+
+      curLinkedList = curLinkedList.next;
+    }
+  }
+
+  const dummy = new ListNode();
+  let tail = dummy;
+
+  while (heap.n > 0) {
+    const node = heap.pop();
+
+    tail.next = node;
+    tail = tail.next;
+  }
+
+  tail.next = null;
+
+  return dummy.next;
+};
+```
+
+#### 交换链表的节点
+
+[24. 两两交换链表中的节点](https://leetcode-cn.com/problems/swap-nodes-in-pairs/)
+
+考点：
+
+- 拆分链表
+- 新链表的思路
+- 合并链表的操作
+
+**思路：**将原链表按奇数偶数区分为两条链表，新建一个假头链表用来承载交换后的值，按照与原先相反的奇偶顺序进行插入（使用 count 标志），最后将 dummy.next 返回。
+
+注意：在使用奇偶链表时，是使用 dummy.next，这样除去了假头节点；遍历奇偶链表的终止条件是两个都不为空，遍历完后还需要分别判断不为空的链表，然后将新链表的 tail 指向非空链表的 tail。
+
+实现：
+
+```javascript
+var swapPairs = function (head) {
+  if (!head) return null;
+
+  const evenDummy = new ListNode();
+  const oddDummy = new ListNode();
+  let evenTail = evenDummy;
+  let oddTail = oddDummy;
+  let count = 0;
+
+  while (head !== null) {
+    const isEven = count % 2 == 0; // 偶数
+    count += 1;
+
+    if (isEven) {
+      evenTail.next = head;
+      evenTail = head;
+    } else {
+      oddTail.next = head;
+      oddTail = head;
+    }
+
+    head = head.next;
+  }
+
+  evenTail.next = null;
+  oddTail.next = null;
+
+  evenTail = evenDummy.next;
+  oddTail = oddDummy.next;
+
+  const dummy = new ListNode();
+  let tail = dummy;
+  count = 1; // 奇数先加入新链表
+
+  //   // 两个新链表均不为空
+  while (evenTail !== null && oddTail !== null) {
+    const isEven = count % 2 === 0;
+    count += 1;
+
+    if (isEven) {
+      tail.next = evenTail;
+      tail = evenTail;
+      evenTail = evenTail.next;
+    } else {
+      tail.next = oddTail;
+      tail = oddTail;
+      oddTail = oddTail.next;
+    }
+  }
+
+  if (evenTail !== null) {
+    tail.next = evenTail;
+  }
+  if (oddTail !== null) {
+    tail.next = oddTail;
+  }
+
+  return dummy.next;
+};
+```
+
+**时间复杂度分析：**每个节点都会访问两次，拆分一次，合并一次，时间复杂度为 O(N)，空间复杂度为 O(1)。
+
+### 三板斧的第三斧：双指针
