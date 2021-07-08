@@ -11,9 +11,9 @@
     "serve": "docusaurus serve"
   },
   "dependencies": {
-    "@docusaurus/core": "2.0.0-alpha.71",
+    "@docusaurus/core": "^2.0.0-beta.3",
     "@docusaurus/module-type-aliases": "^2.0.0-alpha.51",
-    "@docusaurus/preset-classic": "2.0.0-alpha.71",
+    "@docusaurus/preset-classic": "^2.0.0-beta.3",
     "@docusaurus/theme-live-codeblock": "^2.0.0-alpha.71",
     "@easyops-cn/docusaurus-search-local": "^0.15.0",
     "@mdx-js/react": "^1.5.8",
@@ -24,6 +24,7 @@
     "axios": "^0.21.1",
     "clsx": "^1.1.1",
     "colors": "^1.4.0",
+    "nodejieba": "^2.5.2",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
     "react-query": "^3.12.2",

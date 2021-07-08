@@ -9,17 +9,44 @@ module.exports = {
   organizationName: 'facebook', // Usually your GitHub org/user name.
   projectName: 'docblog', // Usually your repo name.
   themes: ['@docusaurus/theme-live-codeblock'],
+  i18n: {
+    defaultLocale: 'zh-Hans',
+    locales: ['zh-Hans'],
+  },
   plugins: [
     [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'browser',
+        path: './browser',
+        sidebarPath: require.resolve('./sidebars.js'),
+        routeBasePath: 'browser',
+        include: ['**/*.md', '**/*.mdx'],
+        showLastUpdateTime: true,
+      },
+    ],
+    [
+      // 搜索
       require.resolve('@easyops-cn/docusaurus-search-local'),
       {
         // `hashed` is recommended as long-term-cache of index file is possible.
         hashed: true,
-        language: ['en'],
+        language: ['en', 'zh'],
+        docsRouteBasePath: ['/docs'],
+        blogRouteBasePath: ['/blog'],
+        docsDir: ['docs'],
+        blogDir: ['blog'],
       },
     ],
   ],
   themeConfig: {
+    colorMode: {
+      switchConfig: {
+        lightIconStyle: { marginRight: '4px' },
+        darkIconStyle: { marginRight: '4px' },
+      },
+    },
+
     liveCodeBlock: {
       playgroundPosition: 'bottom',
     },
@@ -43,14 +70,29 @@ module.exports = {
         },
         { to: 'blog/', label: '博客', position: 'left' },
         {
-          href: 'https://github.com/weiTimes',
-          label: 'GitHub',
-          position: 'right',
+          to: 'browser/overview',
+          label: '浏览器工作原理与实践',
+          position: 'left',
+          items: [
+            {
+              label: '概览',
+              to: 'browser/overview',
+            },
+          ],
         },
         {
-          href: 'https://juejin.im/user/78820566119278/posts',
-          label: '掘金',
+          label: '技术社区',
           position: 'right',
+          items: [
+            {
+              label: 'Github',
+              href: 'https://github.com/weiTimes',
+            },
+            {
+              label: '掘金',
+              href: 'https://juejin.im/user/78820566119278/posts',
+            },
+          ],
         },
       ],
     },

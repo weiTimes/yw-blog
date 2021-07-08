@@ -30,6 +30,10 @@ html[data-theme='dark'] {
   /* any other colors you wish to overwrite */
 }
 
+.react-toggle {
+  margin-right: 8px;
+}
+
 .row {
   display: flex;
   justify-content: center;

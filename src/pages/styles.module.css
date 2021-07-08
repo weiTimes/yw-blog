@@ -25,11 +25,21 @@
   -o-border-radius: 50%;
 }
 
+.wordsSection {
+  position: relative;
+  height: 160px;
+}
+
 .wordsWrap {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  margin-bottom: 30px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  margin: auto;
 }
 
 .words {
@@ -77,10 +87,9 @@
 }
 
 .featureImage {
-  height: 200px;
-  width: 100%;
-  /* width: 200px; */
-  object-fit: stretch;
+  height: 150px;
+  width: 150px;
+  object-fit: contain;
 }
 
 .footer {

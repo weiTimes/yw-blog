@@ -1701,3 +1701,54 @@ var swapPairs = function (head) {
 **时间复杂度分析：**每个节点都会访问两次，拆分一次，合并一次，时间复杂度为 O(N)，空间复杂度为 O(1)。
 
 ### 三板斧的第三斧：双指针
+
+双指针，顾名思义就是两个指针在链表上移动。实际上，我们在前面链表的查找中已经使用过双指针了：比如链表中指定位置插入一个新结点，就使用了两个指针，一前一后两个指针在链表上前进。
+
+1. 间隔指针：前面的指针先走一步，然后后面的指针再一起走；前面的指针先走 k 步，后面的指针再一起走。
+2. 快慢指针：两个指针的速度一快一慢前进，比如一个每次走一步，一个每次走两步。
+
+#### 删除链表的倒数第 k 个结点
+
+[19. 删除链表的倒数第 N 个结点](https://leetcode-cn.com/problems/remove-nth-node-from-end-of-list/)
+
+思路：
+
+1. 在原链表前面加上 dummy，变成带假头的链表
+2. front 指针从 dummy 开始，走 k 步，然后停下来
+3. back 指针指向 dummy，然后两个指针一起走
+4. 当 front 指向最后一个节点时，back 指针刚好指向倒数第 k 个节点的前驱节点
+
+细节：
+
+1. 链表长度 < k，此时什么也不做；
+2. 链表长度 == k，此时删除原来的链表头结点；
+3. 链表长度 > k，此时找到倒数第 k 个结点的前驱，然后删除倒数第 k 个结点。
+
+实现：
+
+```javascript
+var removeNthFromEnd = function (head, n) {
+  if (!head) return null;
+
+  const dummy = new ListNode(0, head);
+  let front = dummy;
+  let back = dummy;
+  let len = 0; // front 先走的 n 步
+
+  while (len < n && front !== null && front.next !== null) {
+    front = front.next;
+    len += 1;
+  }
+
+  while (front !== null && front.next !== null) {
+    back = back.next;
+    front = front.next;
+  }
+
+  if (len === n) {
+    back.next = back.next.next;
+  }
+
+  return dummy.next;
+};
+```

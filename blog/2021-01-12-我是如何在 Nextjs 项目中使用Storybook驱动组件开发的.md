@@ -6,7 +6,7 @@ author_title: 前端攻城狮
 author_url: https://github.com/weiTimes
 author_image_url: https://avatars2.githubusercontent.com/u/21688593?s=460&u=09db1866a0350eb8c4dd0389b22a596d2b081b4b&v=4
 tags: [React, storybook]
-description:
+description: ''
 ---
 
 在使用 `React`开发组件时经常会有一些苦恼，比如当一个组件的复杂度逐步上升时，它所拥有的状态不容易追溯；当需要查看某种状态的组件时，可能需要手动更改组件的属性或是更改接口返回的数据（数据驱动的组件）等等。于是我就去了解并学习 `Storybook`，然后组织了一次分享会，这也是我们团队的第一次技术分享。

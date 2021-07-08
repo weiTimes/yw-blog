@@ -1,5 +1,0 @@
----
-id: generator
-title: Generator
----
-

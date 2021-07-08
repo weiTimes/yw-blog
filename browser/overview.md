@@ -1,6 +1,7 @@
 ---
-id: basic
-title: 浏览器工作原理
+id: overview
+title: 浏览器工作原理与实践
+slug: /overview
 ---
 
 ## 学习资源

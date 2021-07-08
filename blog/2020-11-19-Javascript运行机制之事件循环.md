@@ -6,7 +6,7 @@ author_title: 前端攻城狮
 author_url: https://github.com/weiTimes
 author_image_url: https://avatars2.githubusercontent.com/u/21688593?s=460&u=09db1866a0350eb8c4dd0389b22a596d2b081b4b&v=4
 tags: [Javascript, 事件循环]
-description: 
+description: ''
 ---
 
 ## 运行时的页面构建过程
@@ -281,7 +281,7 @@ function test () {
         Promise.resolve().then(() => {console.log('children3-1')})
     }, 0)
     Promise.resolve().then(() => {console.log('children1')})
-    console.log('end') 
+    console.log('end')
 }
 
 test();
@@ -319,7 +319,7 @@ function handler () {
 
   setTimeout(_ => console.log('timeout')) // 注册宏任务
 
-  requestAnimationFrame(_ => console.log('animationFrame')) // 注册微任务 
+  requestAnimationFrame(_ => console.log('animationFrame')) // 注册微任务
 
   $outer.setAttribute('data-random', Math.random()) // DOM属性修改，触发微任务
 }

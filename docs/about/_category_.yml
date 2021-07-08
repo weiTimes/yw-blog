@@ -1,0 +1,3 @@
+label: '关于我'
+position: 1 # 支持浮动位置
+collapsed: false # 默认展开分类
