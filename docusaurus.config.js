@@ -32,9 +32,9 @@ module.exports = {
         // `hashed` is recommended as long-term-cache of index file is possible.
         hashed: true,
         language: ['en', 'zh'],
-        docsRouteBasePath: ['/docs'],
+        docsRouteBasePath: ['/docs', '/browser'],
         blogRouteBasePath: ['/blog'],
-        docsDir: ['docs'],
+        docsDir: ['docs', 'browser'],
         blogDir: ['blog'],
       },
     ],

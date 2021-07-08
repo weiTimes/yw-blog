@@ -4,11 +4,21 @@ import Layout from '@theme/Layout';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import useBaseUrl from '@docusaurus/useBaseUrl';
+import useThemeContext from '@theme/hooks/useThemeContext';
 import axios from 'axios';
+import { Facebook } from 'react-content-loader';
 
 import styles from './styles.module.css';
 
 import AVATAR from '../../static/img/avatar_employee.png';
+
+const delay = (time) => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve('');
+    }, time);
+  });
+};
 
 interface IWords {
   content: string;
@@ -19,6 +29,7 @@ const features = [
   {
     title: '前端进阶',
     imageUrl: 'img/icon_front.svg',
+    imageUrlDark: 'img/icon_front_dark.svg',
     description: (
       <>
         记录了前端学习过程中的笔记，主要包含Javascript深入、源码阅读、算法等专题。
@@ -28,6 +39,7 @@ const features = [
   {
     title: '博客',
     imageUrl: 'img/icon_blog.svg',
+    imageUrlDark: 'img/icon_blog_dark.svg',
     description: (
       <>
         这里包含的范围较广，有某个技术点的深入与总结、平时的思考、效率工具、以及有趣有料的东西的记录。
@@ -37,6 +49,7 @@ const features = [
   {
     title: '博客搭建',
     imageUrl: 'img/icon_site.svg',
+    imageUrlDark: 'img/icon_site.svg',
     description: (
       <>
         使用Docusaurus搭建，它非常简单地帮助我搭建基于文档的博客网站；另外它是基于React的，这很合我的胃口。
@@ -45,13 +58,20 @@ const features = [
   },
 ];
 
-function Feature({ imageUrl, title, description }) {
+function Feature({ imageUrl, imageUrlDark, title, description }) {
   const imgUrl = useBaseUrl(imageUrl);
+  const imgUrlDark = useBaseUrl(imageUrlDark);
+  const { isDarkTheme } = useThemeContext();
+
   return (
     <div className={clsx('col col--4', styles.feature)}>
       {imgUrl && (
         <div className='text--center' style={{ marginBottom: '20px' }}>
-          <img className={styles.featureImage} src={imgUrl} alt={title} />
+          <img
+            className={styles.featureImage}
+            src={isDarkTheme ? imgUrlDark : imgUrl}
+            alt={title}
+          />
         </div>
       )}
       <h3>{title}</h3>
@@ -64,14 +84,23 @@ function Home() {
   const context = useDocusaurusContext();
   const { siteConfig = {} } = context;
   const [words, setWords] = useState<IWords>();
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    setLoading(true);
+
     axios
       .post<{ data: IWords }>('https://v2.alapi.cn/api/mingyan', {
         token: 'VqtrpyFW4qBlrxB7',
       })
-      .then((res) => {
+      .then(async (res) => {
+        await delay(1000);
+        setLoading(false);
         setWords(res.data.data);
+      })
+      .catch(async () => {
+        await delay(1000);
+        setLoading(false);
       });
   }, []);
 
@@ -97,12 +126,16 @@ function Home() {
 
         <section className={styles.wordsSection}>
           <div className={styles.wordsWrap}>
-            <div className={styles.words}>
-              {words?.content}{' '}
-              {words && (
-                <span className={styles.author}>- {words?.author}</span>
-              )}
-            </div>
+            {loading ? (
+              <Facebook width={600} style={{ marginTop: '50px' }} />
+            ) : (
+              <div className={styles.words}>
+                {words?.content}{' '}
+                {words && (
+                  <span className={styles.author}>- {words?.author}</span>
+                )}
+              </div>
+            )}
           </div>
         </section>
 

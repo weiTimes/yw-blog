@@ -1806,7 +1806,7 @@
     chalk "^4.1.0"
     joi "^17.4.0"
 
-"@docusaurus/utils-validation@2.0.0-beta.3":
+"@docusaurus/utils-validation@2.0.0-beta.3", "@docusaurus/utils-validation@^2.0.0-beta.0":
   version "2.0.0-beta.3"
   resolved "https://registry.yarnpkg.com/@docusaurus/utils-validation/-/utils-validation-2.0.0-beta.3.tgz#24e8187ff853dfec111faaef75af432274bd8773"
   integrity sha512-jGX78NNrxDZFgDjLaa6wuJ/eKDoHdZFG2CVX3uCaIGe1x8eTMG2/e/39GzbZl+W7VHYpW0bzdf/5dFhaKLfQbQ==
@@ -1816,7 +1816,7 @@
     joi "^17.4.0"
     tslib "^2.1.0"
 
-"@docusaurus/utils@2.0.0-alpha.71", "@docusaurus/utils@^2.0.0-alpha.69":
+"@docusaurus/utils@2.0.0-alpha.71":
   version "2.0.0-alpha.71"
   resolved "https://registry.npm.taobao.org/@docusaurus/utils/download/@docusaurus/utils-2.0.0-alpha.71.tgz#d56db36020c33e5bf9d9910c5faa96d6780f4eaf"
   integrity sha1-1W2zYCDDPlv52ZEMX6qW1ngPTq8=
@@ -1832,7 +1832,7 @@
     lodash "^4.17.20"
     resolve-pathname "^3.0.0"
 
-"@docusaurus/utils@2.0.0-beta.3":
+"@docusaurus/utils@2.0.0-beta.3", "@docusaurus/utils@^2.0.0-beta.0":
   version "2.0.0-beta.3"
   resolved "https://registry.yarnpkg.com/@docusaurus/utils/-/utils-2.0.0-beta.3.tgz#81bdf02c5128f3d307d56925cbc398dbf3600e50"
   integrity sha512-DApc6xcb3CvvsBCfRU6Zk3KoZa4mZfCJA4XRv5zhlhaSb0GFuAo7KQ353RUu6d0eYYylY3GGRABXkxRE1SEClA==
@@ -1855,22 +1855,23 @@
     cssesc "^3.0.0"
     immediate "^3.2.3"
 
-"@easyops-cn/docusaurus-search-local@^0.15.0":
-  version "0.15.0"
-  resolved "https://registry.npm.taobao.org/@easyops-cn/docusaurus-search-local/download/@easyops-cn/docusaurus-search-local-0.15.0.tgz#456c5f01dec115fe38b02c33b18ba3145f5bf3ad"
-  integrity sha1-RWxfAd7BFf44sCwzsYujFF9b860=
+"@easyops-cn/docusaurus-search-local@^0.18.1":
+  version "0.18.1"
+  resolved "https://registry.yarnpkg.com/@easyops-cn/docusaurus-search-local/-/docusaurus-search-local-0.18.1.tgz#f28838d9f175d977c1095ffd5245a4c8bcbe0055"
+  integrity sha512-QVvqmOtzhi+YjBSmTQlXkNkT3Y2+AuxKvNRZtinC9BUJAMcQgLkLAun8o11H9wA567nggqda11d7i5/mKFNOag==
   dependencies:
-    "@docusaurus/utils" "^2.0.0-alpha.69"
+    "@docusaurus/utils" "^2.0.0-beta.0"
+    "@docusaurus/utils-validation" "^2.0.0-beta.0"
     "@easyops-cn/autocomplete.js" "^0.38.1"
     cheerio "^1.0.0-rc.3"
     clsx "^1.1.1"
     debug "^4.2.0"
     fs-extra "^9.0.1"
-    joi "^17.3.0"
     klaw-sync "^6.0.0"
     lunr "^2.3.9"
     lunr-languages "^1.4.0"
     mark.js "^8.11.1"
+    tslib "^2.2.0"
 
 "@endiliey/static-site-generator-webpack-plugin@^4.0.0":
   version "4.0.0"
@@ -9688,6 +9689,11 @@ react-base16-styling@^0.6.0:
     lodash.curry "^4.0.1"
     lodash.flow "^3.3.0"
     pure-color "^1.2.0"
+
+react-content-loader@^6.0.3:
+  version "6.0.3"
+  resolved "https://registry.yarnpkg.com/react-content-loader/-/react-content-loader-6.0.3.tgz#32e28ca7120e0a2552fc26655d0d4448cc1fc0c5"
+  integrity sha512-CIRgTHze+ls+jGDIfCitw27YkW2XcaMpsYORTUdBxsMFiKuUYMnlvY76dZE4Lsaa9vFXVw+41ieBEK7SJt0nug==
 
 react-dev-utils@^11.0.1:
   version "11.0.4"
