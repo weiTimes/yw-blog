@@ -26,6 +26,17 @@ module.exports = {
       },
     ],
     [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'react',
+        path: './react',
+        sidebarPath: require.resolve('./sidebars.js'),
+        routeBasePath: 'react',
+        include: ['**/*.md', '**/*.mdx'],
+        showLastUpdateTime: true,
+      },
+    ],
+    [
       // 搜索
       require.resolve('@easyops-cn/docusaurus-search-local'),
       {
@@ -77,6 +88,17 @@ module.exports = {
             {
               label: '概览',
               to: 'browser/overview',
+            },
+          ],
+        },
+        {
+          to: 'react',
+          label: 'React 深入系列',
+          position: 'left',
+          items: [
+            {
+              label: 'setState做了什么',
+              to: 'react/setstate-how-happen',
             },
           ],
         },
