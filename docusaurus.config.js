@@ -82,7 +82,7 @@ module.exports = {
         { to: 'blog/', label: '博客', position: 'left' },
         {
           to: 'browser/overview',
-          label: '浏览器工作原理与实践',
+          label: '浏览器工作原理',
           position: 'left',
           items: [
             {
@@ -92,8 +92,8 @@ module.exports = {
           ],
         },
         {
-          to: 'react',
-          label: 'React 深入系列',
+          to: 'react/setstate-how-happen',
+          label: 'React深入系列',
           position: 'left',
           items: [
             {
