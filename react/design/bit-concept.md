@@ -2,6 +2,8 @@
 title: Bit 核心概念
 ---
 
+![component compose](https://ypyun.ywhoo.cn/assets/20210710175929.png)
+
 ## 思考组件
 
 构建组件最快的方式就是按照我们看到的那样进行构建，不需要太多地考虑它的重用性，因为目的是为了快速交付。

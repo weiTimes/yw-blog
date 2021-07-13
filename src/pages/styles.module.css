@@ -37,7 +37,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: 0;
+  top: 20px;
   bottom: 0;
   margin: auto;
 }
@@ -47,12 +47,25 @@
   font-weight: 600;
   color: var(--ifm-font-color-base);
   max-width: 600px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.wordsEllipses {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .author {
   font-size: 14px;
   color: var(--ifm-color-success-lightest);
   font-weight: 500;
+  text-align: right;
+  margin-left: 4px;
 }
 
 .subTitle {
@@ -87,8 +100,8 @@
 }
 
 .featureImage {
-  height: 150px;
-  width: 150px;
+  height: 180px;
+  width: 100%;
   object-fit: contain;
 }
 

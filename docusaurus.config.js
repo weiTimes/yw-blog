@@ -37,6 +37,17 @@ module.exports = {
       },
     ],
     [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'interview',
+        path: './interview',
+        sidebarPath: require.resolve('./sidebars.js'),
+        routeBasePath: 'interview',
+        include: ['**/*.md', '**/*.mdx'],
+        showLastUpdateTime: true,
+      },
+    ],
+    [
       // 搜索
       require.resolve('@easyops-cn/docusaurus-search-local'),
       {
@@ -81,13 +92,13 @@ module.exports = {
         },
         { to: 'blog/', label: '博客', position: 'left' },
         {
-          to: 'browser/overview',
+          to: 'browser/macro-view/navigator-proecess',
           label: '浏览器工作原理',
           position: 'left',
           items: [
             {
               label: '概览',
-              to: 'browser/overview',
+              to: 'browser/macro-view/navigator-proecess',
             },
           ],
         },
@@ -99,6 +110,17 @@ module.exports = {
             {
               label: 'setState做了什么',
               to: 'react/setstate-how-happen',
+            },
+          ],
+        },
+        {
+          to: 'interview/js-basic',
+          label: '前端面试',
+          position: 'left',
+          items: [
+            {
+              label: 'Javascript 手写代码题',
+              to: 'interview/hardcode/js',
             },
           ],
         },

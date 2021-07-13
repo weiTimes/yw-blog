@@ -60,18 +60,13 @@ const features = [
 
 function Feature({ imageUrl, imageUrlDark, title, description }) {
   const imgUrl = useBaseUrl(imageUrl);
-  const imgUrlDark = useBaseUrl(imageUrlDark);
   const { isDarkTheme } = useThemeContext();
 
   return (
     <div className={clsx('col col--4', styles.feature)}>
       {imgUrl && (
         <div className='text--center' style={{ marginBottom: '20px' }}>
-          <img
-            className={styles.featureImage}
-            src={isDarkTheme ? imgUrlDark : imgUrl}
-            alt={title}
-          />
+          <img className={styles.featureImage} src={imgUrl} />
         </div>
       )}
       <h3>{title}</h3>
@@ -94,12 +89,12 @@ function Home() {
         token: 'VqtrpyFW4qBlrxB7',
       })
       .then(async (res) => {
-        await delay(1000);
+        await delay(400);
         setLoading(false);
         setWords(res.data.data);
       })
       .catch(async () => {
-        await delay(1000);
+        await delay(400);
         setLoading(false);
       });
   }, []);
@@ -130,7 +125,7 @@ function Home() {
               <Facebook width={600} style={{ marginTop: '50px' }} />
             ) : (
               <div className={styles.words}>
-                {words?.content}{' '}
+                <span>{words?.content}</span>
                 {words && (
                   <span className={styles.author}>- {words?.author}</span>
                 )}

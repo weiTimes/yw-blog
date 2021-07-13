@@ -1,9 +1,8 @@
 ---
-id: handwritten-javascript
-title: Javascript 手写代码
+title: Javascript
 ---
 
-### 实现并行请求，支持最大并发数控制
+## 实现并行请求，支持最大并发数控制
 
 ```javascript
 const axios = require('axios');
@@ -68,7 +67,7 @@ multiRequest(
 });
 ```
 
-### 判断对象的数据类型
+## 判断对象的数据类型
 
 ```javascript
 const isType = (type) => (target) =>
@@ -78,7 +77,7 @@ const isArray = isType('Array');
 console.log(isArray([])); // true
 ```
 
-### 循环实现数组 map 方法
+## 循环实现数组 map 方法
 
 ```javascript
 const selfMap = function (fn, context) {
@@ -104,9 +103,9 @@ map 的第二个参数为第一个参数回调中的 this 指向，如果第一�
 
 `arr.hasOwnProperty(i)` 是为了判断稀疏数组的情况，当数组某个索引的数组值不存在时，跳过本次循环。
 
-#### 什么是稀疏数组
+### 什么是稀疏数组
 
-一般来说,JavaScript中的数组是稀疏的,也就是说,数组中的元素之间可以有空隙。
+一般来说,JavaScript 中的数组是稀疏的,也就是说,数组中的元素之间可以有空隙。
 
 创建稀疏数组：
 
@@ -129,7 +128,7 @@ const a = new Array(3).fill(undefined);
 console.log(a); // [undefined, undefined, undefined]
 ```
 
-### 使用 reduce 实现数组 map 方法
+## 使用 reduce 实现数组 map 方法
 
 ```javascript
 function selfMap(fn, context) {
@@ -147,7 +146,7 @@ const res = [1, 2, 3].selfMap((value, index, array) => value + 1);
 console.log(res); // 2, 3, 4
 ```
 
-### 循环实现数组 filter 方法
+## 循环实现数组 filter 方法
 
 ```javascript
 function selfFilter(fn, context) {
@@ -172,7 +171,7 @@ const res = [1, 2, 3].selfFilter((v, i) => v <= 2);
 console.log(res); // [1, 2]
 ```
 
-### 使用 reduce 实现数组 filter 方法
+## 使用 reduce 实现数组 filter 方法
 
 ```javascript
 function selfFilter(fn, context) {
@@ -193,11 +192,11 @@ const res = [1, 2, 3].selfFilter((v, i, array) => v > 2);
 console.log(res);
 ```
 
-### 循环实现数组的 some 方法
+## 循环实现数组的 some 方法
 
-some() 方法测试数组中是不是至少有1个元素通过了被提供的函数测试。它返回的是一个Boolean类型的值。
+some() 方法测试数组中是不是至少有 1 个元素通过了被提供的函数测试。它返回的是一个 Boolean 类型的值。
 
-> 如果用一个空数组进行测试，在任何情况下它返回的都是false。
+> 如果用一个空数组进行测试，在任何情况下它返回的都是 false。
 
 ```javascript
 function selfSome(fn, context) {
@@ -220,7 +219,7 @@ const res = [1, 2, 3].selfSome((v, i, arr) => v > 2);
 console.log(res); // true
 ```
 
-### 实现数组的 reduce 方法
+## 实现数组的 reduce 方法
 
 ```javascript
 if (!Array.prototype.selfReduce) {
@@ -257,14 +256,14 @@ if (!Array.prototype.selfReduce) {
       }
 
       while (k < len) {
-          // 考虑稀疏数组的情况，有值才执行回调
-          if (k in o) {
-            // pre, cur, i, array
-            value = callback(value, o[k], k, o);
-          }
-
-          k++;
+        // 考虑稀疏数组的情况，有值才执行回调
+        if (k in o) {
+          // pre, cur, i, array
+          value = callback(value, o[k], k, o);
         }
+
+        k++;
+      }
 
       return value;
     },
