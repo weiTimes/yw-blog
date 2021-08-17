@@ -2,6 +2,21 @@
 title: Javascript
 ---
 
+## Promise
+
+### Promise 解决了什么问题，业界有哪些实现？
+
+产生**回调地狱**的原因主要是，多个异步请求嵌套调用：第一个异步请求的结果结果往往是第二个异步请求的输入。
+
+在传统的异步编程中，如果多个异步请求之间存在依赖关系，就需要通过嵌套回调满足这种关系，如果嵌套层数过多，可读性和维护性都会变得很差，产生所谓的”回调地狱“，而 Promise 是以更线性的方式，即链式调用，增加了可读性和可维护性。所以 Promise 解决的是异步编程的编码风格的问题。
+
+业界的实现主要有 bluebird、Q、es6-promise。
+
+### 手写符合 Promise/A+ 规范的 Promise
+
+> - [Promise/A+ 规范](https://github.com/promises-aplus/promises-spec)
+> - [Promise/A+ 测试工具](https://github.com/promises-aplus/promises-tests)
+
 ## 实现并行请求，支持最大并发数控制
 
 ```javascript

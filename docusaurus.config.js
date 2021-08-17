@@ -108,6 +108,10 @@ module.exports = {
           position: 'left',
           items: [
             {
+              label: 'React 基础篇',
+              to: 'react/basic/jsx',
+            },
+            {
               label: 'setState做了什么',
               to: 'react/setstate-how-happen',
             },
