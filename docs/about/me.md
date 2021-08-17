@@ -11,7 +11,3 @@ slug: /
 :::
 
 我的邮箱：1156385527@qq.com.
-
-我的微信：
-
-<img src="wx qrcode" src="https://ypyun.ywhoo.cn/assets/20210407145724.png" width="400" />
