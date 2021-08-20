@@ -17,6 +17,470 @@ title: Javascript
 > - [Promise/A+ 规范](https://github.com/promises-aplus/promises-spec)
 > - [Promise/A+ 测试工具](https://github.com/promises-aplus/promises-tests)
 
+#### 实现 Promise 的关键点
+
+:::note
+
+1. Promise 使用 new 关键词，它是一个类；
+2. `new Promise()` 接收一个函数作为参数；
+3. 传入的函数接收两个参数，分别是 resolve 和 reject，用来改变 Promise 的状态；
+4. Promise 有三种状态，分别是 pending、fulfilled 和 rejected，调用 resolve 会将状态改成 fulfilled，调用 reject 会将状态改成 rejected；
+5. Promise 实例化后可以调用 then 方法，并且支持链式调用，也就是 then 方法需要返回一个带 then 方法的对象，可以是 `this` 或 `promise` 的实例。
+6. then 的**值穿透特性**。如果 then 未传入函数或传入的类型不是函数，则后面的 then 能够得到之前 then 的返回值。
+
+:::
+
+```javascript title="代码实现"
+const PENDING = 'pending';
+const FULFILLED = 'fulfilled';
+const REJECTED = 'rejected';
+
+class SuperPromise {
+  status = PENDING;
+  value = null;
+  reason = null;
+  onResolvedCallbacks = [];
+  onRejectedCallback = [];
+
+  static resolvePromise(promise, value, resolve, reject) {
+    // value 为 Promise 对象
+    if (value instanceof SuperPromise) {
+      if (value === promise) {
+        // 循环引用，抛出异常
+        return reject(new TypeError('Cannot resolve promise with self'));
+      } else {
+        // 等 promise 执行完继续执行 resolvePromise
+        value.then((val) => {
+          SuperPromise.resolvePromise(promise, val, resolve, reject);
+        }, reject);
+      }
+    } else {
+      // 普通值
+      resolve(value);
+    }
+  }
+
+  constructor(executor) {
+    try {
+      executor(this.resolve, this.reject);
+    } catch (error) {
+      // 捕获到错误 reject
+      this.reject(error);
+    }
+  }
+
+  resolve = (value) => {
+    if (this.status === PENDING) {
+      this.status = FULFILLED;
+      this.value = value;
+      this.onResolvedCallbacks.forEach((callback) => callback());
+    }
+  };
+
+  reject = (reason) => {
+    if (this.status === PENDING) {
+      this.status = REJECTED;
+      this.reason = reason;
+      this.onRejectedCallback.forEach((callback) => callback());
+    }
+  };
+
+  then = (onFulfilled, onRjected) => {
+    // 如果传入的不是函数，则构造一个返回传入参数的函数
+    onFulfilled =
+      typeof onFulfilled === 'function' ? onFulfilled : (value) => value;
+    onRjected =
+      typeof onRjected === 'function' ? onRjected : (reason) => reason;
+
+    const newPromise = new SuperPromise((resolve, reject) => {
+      switch (this.status) {
+        case PENDING:
+          if (this.status === PENDING) {
+            // 使用 try...catch 捕获错误
+            this.onResolvedCallbacks.push(() => {
+              setTimeout(() => {
+                try {
+                  const value = onFulfilled(this.value);
+
+                  SuperPromise.resolvePromise(
+                    newPromise,
+                    value,
+                    resolve,
+                    reject
+                  );
+                } catch (error) {
+                  reject(error);
+                }
+              }, 0);
+            });
+            this.onRejectedCallback.push(() => {
+              setTimeout(() => {
+                try {
+                  const value = onRjected(this.reason);
+
+                  SuperPromise.resolvePromise(
+                    newPromise,
+                    value,
+                    resolve,
+                    reject
+                  );
+                } catch (error) {
+                  reject(error);
+                }
+              }, 0);
+            });
+          }
+          break;
+        case FULFILLED:
+          setTimeout(() => {
+            try {
+              const value = onFulfilled(this.value);
+
+              SuperPromise.resolvePromise(newPromise, value, resolve, reject);
+            } catch (error) {
+              reject(error);
+            }
+          }, 0);
+          break;
+        case REJECTED:
+          setTimeout(() => {
+            try {
+              const value = onRjected(this.reason);
+
+              SuperPromise.resolvePromise(newPromise, value, resolve, reject);
+            } catch (error) {
+              reject(error);
+            }
+          }, 0);
+          break;
+      }
+    });
+
+    return newPromise;
+  };
+}
+```
+
+#### 测试是否符合 **Promises/A+**
+
+安装 `promises-aplus-tests`:
+
+```shell
+yarn global add promises-aplus-tests
+```
+
+在测试之前，还需要写一个简单的 adapter：
+
+```javascript title="adapter"
+SuperPromise.defer = SuperPromise.deferred = function () {
+  let dfd = {};
+  dfd.promise = new SuperPromise((resolve, reject) => {
+    dfd.resolve = resolve;
+    dfd.reject = reject;
+  });
+  return dfd;
+};
+```
+
+执行测试用例：
+
+```shell
+promises-aplus-tests ./promise.js
+```
+
+#### 参考
+
+- [手写 Promise](https://zhuanlan.zhihu.com/p/183801144)
+- [promiess-tests](https://github.com/promises-aplus/promises-tests)
+
+### 手写 Promise.all
+
+多个异步并行执行，返回最终的结果，如果有一个失败则立即失败。
+
+:::note
+
+1. 接收可迭代对象
+2. 判断可迭代对象是否为空，如果为空，直接返回 Promise.resolve([])
+3. 当所有 Promise 完成时，resolve 一个结果数组
+4. 当其中有一个失败，立刻 reject
+
+:::
+
+```javascript title="代码实现"
+const promiseAll = (iterators) => {
+  return new Promise((resolve, reject) => {
+    if (!iterators || iterators.length === 0) {
+      return resolve([]);
+    }
+
+    let results = [];
+
+    for (let i = 0; i < iterators.length; i++) {
+      const item = iterators[i];
+
+      // item 可能不是 Promise 对象，统一转换为 Promise 对象
+      Promise.resolve(item)
+        .then((res) => {
+          results[i] = res; // 按顺序保存对应的结果
+
+          // 当所有任务都执行完毕后，resolve一个结果数组
+          if (results.length === iterators.length) {
+            resolve(results);
+          }
+        })
+        .catch((e) => {
+          // 一旦有一个 Promise 失败，立刻 reject
+          return reject(e);
+        });
+    }
+  });
+};
+```
+
+```javascript title="测试用例"
+const timeout = (ms) =>
+  new Promise((resolve, reject) => {
+    if (!ms) {
+      reject('未传入时间');
+    } else {
+      setTimeout(() => {
+        resolve(ms);
+      }, ms);
+    }
+  });
+
+promiseAll([timeout(1000), timeout(2000), timeout(), timeout(3000)])
+  .then((res) => {
+    console.log(res, 'res');
+  })
+  .catch((e) => {
+    console.log(e, 'e');
+  });
+```
+
+### 手写 Promise.allSettled
+
+多个异步并行执行，无论是成功还是失败都会返回对应的结果。
+
+:::note
+当所有 promise 都完成（解决或拒绝 - fulfilled 或 rejected）时，resolve 结果数组，**结果项包含成功或失败的对象**；
+结果对象：{ status: 'fulfilled', value: {} } | { status: 'rejected', reason: {} }
+:::
+
+```javascript title="代码实现"
+const promiseAllSettled = (promises) => {
+  return new Promise((resolve, reject) => {
+    if (!promises || promises.length === 0) {
+      return resolve([]);
+    }
+
+    const results = [];
+
+    for (let i = 0; i < promises.length; i++) {
+      const promise = promises[i];
+
+      Promise.resolve(promise)
+        .then((res) => {
+          results[i] = { status: 'fulfilled', value: res };
+        })
+        .catch((e) => {
+          results[i] = { status: 'rejected', reason: e };
+        })
+        .finally(() => {
+          if (results.length === promises.length) {
+            resolve(results);
+          }
+        });
+    }
+  });
+};
+```
+
+```javascript title="测试用例"
+const timeout = (ms) =>
+  new Promise((resolve, reject) => {
+    if (!ms) {
+      reject('未传入时间');
+    } else {
+      setTimeout(() => {
+        resolve(ms);
+      }, ms);
+    }
+  });
+
+promiseAllSettled([
+  timeout(1000),
+  timeout(2000),
+  timeout(3000),
+  timeout(),
+]).then((res) => console.log(res)); // [ { status: 'fulfilled', value: 1000 }, ... ]
+```
+
+### 手写 Promise.race
+
+多个异步并行执行，返回最快返回的结果。
+
+:::note
+
+1. 接收一个可迭代对象
+2. 可迭代项统一使用 Promise.resolve 包装
+3. 如果没有传入则一直处于 pending 状态
+4. 迭代过程中一旦有个 Promise 对象 resolve 或 reject 就返回
+
+:::
+
+```javascript title="代码实现"
+const promiseRace = (iterators) => {
+  return new Promise((resolve, reject) => {
+    if (iterators && iterators.length > 0) {
+      for (const item of iterators) {
+        Promise.resolve(item)
+          .then((res) => {
+            return resolve(res);
+          })
+          .catch((e) => {
+            return reject(e);
+          });
+      }
+    }
+  });
+};
+```
+
+### 手写 Promise.resolve
+
+产生一个成功的 Promise，并且支持异步：
+
+```javascript title="代码实现"
+class SuperPromise {
+  static resolve(value) {
+    return new SuperPromise((resolve, reject) => {
+      if (value instanceof SuperPromise) {
+        // 如果是 Promise 对象，则继续等待
+        return value.then(resolve, reject);
+      }
+
+      resolve(value);
+    });
+  }
+}
+```
+
+```javascript title="测试用例"
+SuperPromise.resolve(
+  new SuperPromise((resolve) => {
+    setTimeout(() => {
+      resolve(4);
+    }, 0);
+  })
+).then((res) => {
+  console.log(res, 'resolve');
+});
+```
+
+### 手写 Promise.reject
+
+产生一个拒绝的 Promise。
+
+```javascript title="代码实现"
+class SuperPromise {
+  static reject(reason) {
+    return new SuperPromise((resolve, reject) => {
+      reject(reason);
+    });
+  }
+}
+```
+
+### 手写 Promise.prototype.catch
+
+捕获异常。
+
+```javascript
+class SuperPromise {
+  catch = (callback) => {
+    return this.then(null, callback);
+  };
+}
+```
+
+### 手写 Promise.prototype.finally
+
+无论返回的是成功还是拒绝，都会执行，回调如果返回的是一个 Promise，则会等待它执行完毕，如果是成功则将上一次返回的结果。
+
+```javascript
+class SuperPromise {
+  finally = (callback) => {
+    return this.then(
+      (value) => {
+        return SuperPromise.resolve(callback()).then(() => value);
+      },
+      (reason) => {
+        return SuperPromise.resolve(callback()).then(() => {
+          throw reason;
+        });
+      }
+    );
+  };
+}
+```
+
+```javascript title="测试用例"
+Promise.resolve(456)
+  .finally(() => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve(123);
+      }, 3000);
+    });
+  })
+  .then((data) => {
+    console.log(data, 'success'); // 456 success
+  })
+  .catch((err) => {
+    console.log(err, 'error');
+  });
+```
+
+### 实现 promisify
+
+:::note
+
+将 nodejs 中的 api 转换成 promise 的写法。
+
+nodejs 12.18 后支持 promisify: const fs = require('fs').promises;
+
+:::
+
+```javascript title="代码实现"
+const promisify = (fn) => {
+  return (...args) => {
+    return new Promise((resolve, reject) => {
+      fn(...args, (error, result) => {
+        if (error) return reject(error);
+
+        resolve(result);
+      });
+    });
+  };
+};
+```
+
+将 nodejs 的所有 api 都转换成 promise 的写法：
+
+```javascript title="代码实现"
+const promisifyAll = (target) => {
+  Reflect.ownKeys(target).forEach((key) => {
+    if (typeof target[key] === 'function') {
+      // 默认会将原有的方法 全部增加一个 Async 后缀 变成 promise 写法
+      target[`${key}Async`] = promisify(target[key]);
+    }
+  });
+
+  return target;
+};
+```
+
 ## 实现并行请求，支持最大并发数控制
 
 ```javascript
