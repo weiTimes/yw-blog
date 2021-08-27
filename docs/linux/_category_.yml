@@ -1,0 +1,4 @@
+label: 'Linux'
+position: 6 # 支持浮动位置
+collapsed: true # 默认展开分类
+
